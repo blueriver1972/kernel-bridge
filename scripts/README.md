@@ -21,15 +21,26 @@
 이 PC에는 `docker` 와 WSL 배포판이 **설치돼 있지 않습니다** (`git`, `python`, `wsl` 실행기만 확인됨).
 20·21을 로컬에서 돌리려면 둘 중 하나가 필요합니다.
 
-**A. 로컬 WSL2 + Docker Desktop** (권장 — $0)
-```powershell
-wsl --install -d Ubuntu-22.04
-```
-재부팅 후 Docker Desktop 설치, WSL2 백엔드 활성화. 그다음:
-```bash
-docker run --rm -it -v "$PWD":/w -w /w rocm/dev-ubuntu-22.04:6.2 bash
-```
-GPU 패스스루가 필요 없습니다 — hipify와 컴파일만 하기 때문입니다.
+**A. 로컬 WSL2 + docker.io** (권장 — $0)
+
+점검 결과 이 PC는 **WSL·Virtual Machine Platform 기능이 이미 활성**이고
+(`LxssManager`/`vmcompute` 서비스 존재) **WSL2 커널만 없습니다.**
+Windows 기능 켜기와 그에 따른 재부팅은 필요 없습니다.
+
+1. **관리자 PowerShell** 에서:
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File scripts\win\setup-wsl.ps1
+   ```
+   `wsl --update` → `--set-default-version 2` → `Ubuntu-22.04` 설치까지 합니다.
+2. Ubuntu 첫 실행에서 **UNIX 사용자명·비밀번호를 직접 입력**합니다.
+3. WSL 안에서:
+   ```bash
+   bash scripts/win/setup-rocm-container.sh
+   ```
+   docker.io 설치 + ROCm 개발 이미지 pull + `hipify-perl`/`hipcc` 존재 확인까지 합니다.
+
+Docker Desktop 은 쓰지 않습니다 — 추가 관리자 설치와 라이선스 동의를 피하려는 것이고,
+어차피 GPU 패스스루가 필요 없습니다 (hipify 와 컴파일만 하므로).
 
 **B. 저가 CPU 클라우드 인스턴스** (~$0.1/h)
 아무 리눅스 VM에 docker 설치 후 위 컨테이너 실행. MI300X 대비 100배 저렴합니다.
