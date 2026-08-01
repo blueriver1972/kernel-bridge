@@ -2,8 +2,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <hip/hip_runtime.h>
-#include <hipblas.h>
-#include <hipblaslt.h>
+#include "hip_intrinsics_compat.h"   // [FIX-4] __syncwarp/__stcs/__ldcs(int4)
+#include <hipblas/hipblas.h>      // [FIX-3] hipify 는 ROCm 5.x 시절 평면 경로를 낸다
+#include <hipblaslt/hipblaslt.h>  // [FIX-3] 동일
 #include <float.h>
 
 #define WARP_SIZE 32U
@@ -16,7 +17,10 @@ __host__ __device__ T ceil_div(T dividend, T divisor) {
 
 __device__ float warpReduceSum(float val) {
     for (int offset = 16; offset > 0; offset /= 2) {
-        val += __shfl_xor_sync(0xFFFFFFFF, val, offset);
+        // [FIX-5] offset 이 16 부터 시작 = 32레인 워프 가정.
+        // AMD 웨이브는 64 이므로 폭을 32 로 못박아 32레인 그룹 단위로 리덕션한다.
+        // (WARP_SIZE 32 와 blockReduce 의 lane_id/warp_id 계산과 일관)
+        val += __shfl_xor(val, offset, 32);
     }
     return val;
 }
@@ -208,14 +212,24 @@ typedef Packed128<floatX> x128;
 // we need to be careful here to only define our own versions if none already exist, otherwise the compiler will
 // complain.
 // If not, you easily get "no viable overload" (for sm52) and "function already exists" (sm_80)
-#if defined(ENABLE_BF16) && (__CUDACC_VER_MAJOR__ < 12) && !((__CUDA_ARCH__ >= 800) || !defined(__CUDA_ARCH__))
+// [FIX-8] 원본 가드는 __CUDACC_VER_MAJOR__ 와 __CUDA_ARCH__ 를 본다.
+//   HIP 에서는 두 매크로가 모두 정의되지 않아 조건이 **항상 거짓**이 되고,
+//   bf16 용 __ldcs/__stcs 가 조용히 사라진다. hipify 는 #if 안을 읽지 않으므로
+//   이런 종류는 절대 잡지 못한다 — 에러는 한참 뒤 사용 지점에서 튀어나온다.
+//   본문의 __nv_bfloat16_raw 도 hipify 가 변환하지 못했다.
+#if defined(ENABLE_BF16)
 __device__ floatX __ldcs(const floatX* address) {
-    unsigned short bf = __ldcs(reinterpret_cast<const unsigned short*>(address));
-    return __nv_bfloat16_raw{bf};
+    unsigned short bf = __builtin_nontemporal_load(
+        reinterpret_cast<const unsigned short*>(address));
+    floatX r;
+    __builtin_memcpy(&r, &bf, sizeof(bf));   // bf16 은 결국 16비트 비트패턴이다
+    return r;
 }
 
 __device__ void __stcs(floatX* address, floatX value) {
-    __stcs(reinterpret_cast<unsigned short*>(address), ((__nv_bfloat16_raw)value).x);
+    unsigned short bf;
+    __builtin_memcpy(&bf, &value, sizeof(bf));
+    __builtin_nontemporal_store(bf, reinterpret_cast<unsigned short*>(address));
 }
 #endif
 
@@ -320,7 +334,7 @@ void validate_result(D* device_result, const T* cpu_reference, const char* name,
 #endif
     for (int i = 0; i < num_elements; i++) {
         // Skip masked elements
-        if(!isfinite(cpu_reference[i]))
+        if(!std::isfinite((float)cpu_reference[i]))   // [FIX-6] HIP 호스트에서 오버로드 모호
             continue;
 
         // print the first few comparisons

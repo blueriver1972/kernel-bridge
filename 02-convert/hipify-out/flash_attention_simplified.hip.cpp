@@ -152,7 +152,11 @@ void launch_flash_attention(const float* Q, const float* K, const float* V,
 {
     dim3 grid((N + Br - 1) / Br);
     dim3 block(Br);
-    float scale = rsqrtf((float)HEAD_DIM);
+    // [FIX-1] rsqrtf 는 HIP 에서 __device__ 전용이라 호스트에서 부를 수 없다.
+    //   CUDA: math_functions.h 가 호스트용 rsqrtf 도 제공 → 원본은 그냥 컴파일됐다.
+    //   HIP : __clang_hip_math.h 의 rsqrtf 는 __device__ 뿐 → host 호출 시 에러.
+    // 값은 동일하고 호스트에서 한 번 계산하는 스칼라라 성능 영향 없음.
+    float scale = 1.0f / sqrtf((float)HEAD_DIM);
     flash_attention_fwd<<<grid, block>>>(Q, K, V, O, N, scale);
 }
 

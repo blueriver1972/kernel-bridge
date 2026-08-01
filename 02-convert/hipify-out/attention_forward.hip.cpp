@@ -49,11 +49,12 @@ version 11 is kernel 10 skipping FP16/FP32 conversions (full FP16/BF16 network)
 #include <stdlib.h>
 #include <assert.h>
 #include <float.h>
-#include <hipblas.h>
+#include <hipblas/hipblas.h>      // [FIX-3] hipify 는 ROCm 5.x 시절 평면 경로를 낸다
 #include <hip/hip_runtime.h>
-#include <cuda_bf16.h>
+#include <hip/hip_bf16.h>   // [FIX-7] hipify 가 놓친 bf16 헤더 (scope.md R6)
 #include <hip/hip_cooperative_groups.h>
-#include <cooperative_groups/reduce.h>
+#include "hip_intrinsics_compat.h"   // [FIX-4]
+#include "cg_reduce_compat.h"   // [FIX-2] HIP 에는 cg::reduce 가 없다
 
 #define ENABLE_BF16
 #include "common.h"
@@ -236,7 +237,8 @@ __global__ void attention_softmax_kernel1(float* att, const float* preatt,
 // warp-level reduction for finding the maximum value
 __device__ float warpReduceMax(float val) {
     for (int offset = 16; offset > 0; offset /= 2) {
-        val = fmaxf(val, __shfl_down_sync(0xFFFFFFFF, val, offset));
+        // [FIX-5] offset 16 시작 = 32레인 워프 가정 → 폭 32 명시 (softmax 쪽과 동일)
+        val = fmaxf(val, __shfl_down(val, offset, 32));
     }
     return val;
 }

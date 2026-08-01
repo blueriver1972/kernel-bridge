@@ -33,7 +33,8 @@ version 7 is softmax optimized for very large C.
 #include <assert.h>
 #include <hip/hip_runtime.h>
 #include <hip/hip_cooperative_groups.h>
-#include <cooperative_groups/reduce.h>
+#include "hip_intrinsics_compat.h"   // [FIX-4]
+#include "cg_reduce_compat.h"   // [FIX-2] HIP 에는 cg::reduce 가 없다
 #include "common.h"
 
 // ----------------------------------------------------------------------------
@@ -176,7 +177,8 @@ __global__ void softmax_forward_kernel2(float* out, const float* inp, int N, int
 // warp-level reduction for finding the maximum value
 __device__ float warpReduceMax(float val) {
     for (int offset = 16; offset > 0; offset /= 2) {
-        val = fmaxf(val, __shfl_down_sync(0xFFFFFFFF, val, offset));
+        // [FIX-5] offset 16 시작 = 32레인 가정 → 폭 32 명시
+        val = fmaxf(val, __shfl_down(val, offset, 32));
     }
     return val;
 }
@@ -196,7 +198,7 @@ __global__ void softmax_forward_kernel3(float* out, const float* inp, int N, int
     maxval = warpReduceMax(maxval);
 
     // Broadcast maxval within the warp
-    float offset = __shfl_sync(0xFFFFFFFF, maxval, 0);
+    float offset = __shfl(maxval, 0, 32);   // [FIX-5] 위 리덕션과 같은 32레인 그룹
 
     // Compute expf and write the result to global memory
     for (int i = tid; i < C; i += blockDim.x) {
@@ -425,7 +427,7 @@ __global__ void softmax_forward_kernel7(float* out, const float* inp, int N, int
     for (int i = tid; i < C; i += blockDim.x * UNROLL_FACTOR) {
         #pragma unroll
         for (int u = 0; u < UNROLL_FACTOR; u++) {
-            maxval = fmaxf(maxval, x[min(C - 1, i + u*blockDim.x)]);
+            maxval = fmaxf(maxval, x[min(C - 1, (int)(i + u*blockDim.x))]);
         }
     }
 
@@ -455,13 +457,13 @@ __global__ void softmax_forward_kernel7(float* out, const float* inp, int N, int
         float reg_array[UNROLL_FACTOR];
         #pragma unroll
         for (int u = 0; u < UNROLL_FACTOR; u++) {
-            reg_array[u] = __ldcs(&x[min(C - 1, i + u*blockDim.x)]);
+            reg_array[u] = __ldcs(&x[min(C - 1, (int)(i + u*blockDim.x))]);
         }
         #pragma unroll
         for (int u = 0; u < UNROLL_FACTOR; u++) {
             if (i + u*blockDim.x < C) {
                 float output = expf(reg_array[u] - offset);
-                y[min(C - 1, i + u*blockDim.x)] = output; // compiler likes redundant min()?!
+                y[min(C - 1, (int)(i + u*blockDim.x))] = output; // compiler likes redundant min()?!
                 sumval += output; // combined into the same loop unlike kernel3
             }
         }
@@ -493,7 +495,7 @@ __global__ void softmax_forward_kernel7(float* out, const float* inp, int N, int
         float reg_array[UNROLL_FACTOR];
         #pragma unroll
         for (int u = 0; u < UNROLL_FACTOR; u++) {
-            reg_array[u] = y[min(C - 1, i + u*blockDim.x)];
+            reg_array[u] = y[min(C - 1, (int)(i + u*blockDim.x))];
         }
         #pragma unroll
         for (int u = 0; u < UNROLL_FACTOR; u++) {
@@ -543,8 +545,10 @@ __global__ void softmax_forward_online_kernel8(float* out, const float* inp, int
     float offsetMaxval, offsetSumval;
     for (int offset = warpSize / 2; offset > 0; offset >>= 1) {
         __syncwarp();
-        offsetMaxval = __shfl_down_sync(0xFFFFFFFF, maxval, offset);
-        offsetSumval = __shfl_down_sync(0xFFFFFFFF, sumval, offset);
+        // [FIX-5] 이 커널은 laneId/warpsPerBlock 을 런타임 warpSize 로 계산한다.
+        // 위 warpReduceMax 와 달리 폭이 warpSize(AMD=64) 여야 일관된다 — R4 실물.
+        offsetMaxval = __shfl_down(maxval, offset, warpSize);
+        offsetSumval = __shfl_down(sumval, offset, warpSize);
         if (offsetMaxval > maxval) {
             sumval *= expf(maxval - offsetMaxval);
             maxval = offsetMaxval;
@@ -556,8 +560,8 @@ __global__ void softmax_forward_online_kernel8(float* out, const float* inp, int
 
     // sync the warp wised maxval and sumval
     // which are also the maxval and sumval of one row in C
-    maxval = __shfl_sync(0xFFFFFFFF, maxval, 0);
-    sumval = __shfl_sync(0xFFFFFFFF, sumval, 0);
+    maxval = __shfl(maxval, 0, warpSize);   // [FIX-5]
+    sumval = __shfl(sumval, 0, warpSize);
 
     for (int i = laneId; i < C; i += warpSize) {
         y[i] = expf(x[i] - maxval) / sumval;

@@ -28,11 +28,17 @@ FROM rocm/dev-ubuntu-22.04:6.3
 
 # perl: hipify-perl 이 실제로 요구하는 것
 # file, ca-certificates: 진단·다운로드 시 필요
+# hipblas/hipblaslt: dev 이미지에 BLAS 가 아예 없다 (2026-08-02 확인, 설치 패키지 0개).
+#   llm.c 의 attention_forward / softmax_forward 가 cuBLAS·cuBLASLt 를 쓰므로
+#   변환 결과도 hipblas.h / hipblaslt.h 를 요구한다.
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
         perl \
         file \
         ca-certificates \
+        hipblas-dev \
+        hipblaslt-dev \
+        rocblas-dev \
  && rm -rf /var/lib/apt/lists/*
 
 # hipcc 를 PATH 앞쪽에 둔다 — /usr/bin/hipcc 에 가려지면 안 된다

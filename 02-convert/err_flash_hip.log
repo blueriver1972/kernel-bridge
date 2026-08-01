@@ -1,8 +1,0 @@
-/w/02-convert/hipify-out/flash_attention_simplified.hip.cpp:155:19: error: no matching function for call to 'rsqrtf'
-  155 |     float scale = rsqrtf((float)HEAD_DIM);
-      |                   ^~~~~~
-/opt/rocm-6.3.0/lib/llvm/lib/clang/18/include/__clang_hip_math.h:658:7: note: candidate function not viable: call to __device__ function from __host__ function
-  658 | float rsqrtf(float __x) { return __ocml_rsqrt_f32(__x); }
-      |       ^
-1 error generated when compiling for gfx942.
-failed to execute:/opt/rocm-6.3.0/lib/llvm/bin/clang++  --offload-arch=gfx942 --driver-mode=g++ --hip-link  -O3 -ffast-math -I/w/02-convert/hipify-out -x hip /w/02-convert/hipify-out/flash_attention_simplified.hip.cpp -x hip /w/02-convert/hipify-out/flash_attention_test.hip.cpp -o "/w/bin/flash_hip"
