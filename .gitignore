@@ -1,0 +1,26 @@
+# 빌드 산출물 — 로그는 산출물이지만 바이너리는 아니다
+bin/
+*.o
+*.exe
+*.out
+attn
+softmax
+flash
+flash_test
+*_test
+*_hip
+
+# 외부 소스 (얕은 클론으로 재현 가능 — 커밋 SHA만 기록한다)
+vendor/
+
+# rocprof / nsight 원시 덤프 (요약본만 커밋)
+*.csv.tmp
+results.json
+results.db
+*.nsys-rep
+*.ncu-rep
+
+# OneDrive / Windows
+Thumbs.db
+desktop.ini
+~$*
