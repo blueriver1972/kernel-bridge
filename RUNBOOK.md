@@ -8,8 +8,8 @@
 |---|---|---|
 | ✅ | Phase 0 — 저장소·구조·하네스·범위 확정·스크립트 | 완료 |
 | ✅ | WSL2 설치 (2.7.11.0 / 커널 6.18.33.2) | 완료 |
-| ⬜ | **Ubuntu 배포판 설치** | ← **여기부터** |
-| ⬜ | Phase 2 환경 (docker + ROCm 이미지) | |
+| ✅ | Ubuntu-22.04 설치 (VERSION 2, 사용자 생성 완료) | 완료 |
+| ⬜ | **Phase 2 환경 (docker + ROCm 이미지)** | ← **여기부터 (STEP 2)** |
 | ⬜ | Phase 1 — A100 기준선 | |
 | ⬜ | Phase 2 — hipify + 컴파일 수정 루프 | |
 | ⬜ | Phase 3 — MI300X 검증 | |
@@ -41,24 +41,47 @@ wsl --list --verbose
 
 ---
 
-## STEP 2 — Phase 2 환경 (WSL 안, GPU 불필요, $0)
+## ⚠ 어느 셸에서 치는가 — 이걸 헷갈리면 `command not found` 가 난다
+
+| 프롬프트 모양 | 어디 | 쓸 수 있는 것 |
+|---|---|---|
+| `PS C:\>` | **Windows PowerShell** | `wsl`, `wsl --list`, `powershell` |
+| `k8096@DESKTOP-...:~$` | **Ubuntu (WSL 안)** | `bash`, `docker`, `apt`, `git` |
+
+`wsl` 은 Windows 명령이라 **Ubuntu 안에서는 존재하지 않는다.**
+이미 Ubuntu 프롬프트에 들어와 있다면 `wsl -d ... -- bash x.sh` 대신 그냥 `bash x.sh` 를 친다.
+
+---
+
+## STEP 2 — Phase 2 환경 (GPU 불필요, $0)
+
+### 🐧 Ubuntu 프롬프트에서 (`k8096@...$`)
+
+```bash
+bash "/mnt/d/onedrive/문서/Claude/Projects/kernel-bridge/scripts/win/setup-rocm-container.sh"
+```
+
+### 🪟 Windows PowerShell 에서 시작한다면
 
 ```powershell
 wsl -d Ubuntu-22.04 -- bash "/mnt/d/onedrive/문서/Claude/Projects/kernel-bridge/scripts/win/setup-rocm-container.sh"
 ```
 
-docker.io 설치 → 데몬 기동 → ROCm 개발 이미지 pull → `hipify-perl`/`hipcc` 존재 확인.
-sudo 비밀번호를 몇 번 물어본다. **받아진 이미지 태그를 `02-convert/scope.md`에 기록**할 것.
+둘은 같은 일을 한다: docker.io 설치 → 데몬 기동 → ROCm 개발 이미지 pull →
+`hipify-perl`/`hipcc` 존재 확인. sudo 비밀번호를 몇 번 물어본다.
+**받아진 이미지 태그를 `02-convert/scope.md`에 기록**할 것.
 
-끝나면 한 번:
+끝나면 🪟 PowerShell 에서 한 번:
 ```powershell
 wsl --shutdown
 ```
 docker 그룹 반영에 필요하다.
 
-> 경로에 한글(`문서`)이 있어 docker 볼륨 마운트가 말썽이면,
-> WSL 안에서 `cp -r /mnt/d/onedrive/문서/Claude/Projects/kernel-bridge ~/kernel-bridge`
-> 로 리눅스 쪽에 복사해 작업한다 (`/mnt/d` 는 느리기도 하다).
+> 경로 확인됨 (2026-08-02): `/mnt/d/onedrive/문서/Claude/Projects/kernel-bridge` 가
+> WSL 에서 정상적으로 보인다. 한글 경로는 문제되지 않는다.
+> 다만 `/mnt/d` 는 DrvFs 라 느리고 OneDrive 동기화와 겹친다. 빌드가 답답하면
+> `cp -r /mnt/d/onedrive/문서/Claude/Projects/kernel-bridge ~/kernel-bridge` 로
+> 리눅스 쪽에 복사해 작업하고, 결과 파일만 되돌려 복사한다.
 
 ---
 
