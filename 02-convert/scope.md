@@ -114,6 +114,13 @@ MI300X 의 fp32 ms 와 나란히 놓으면 하드웨어 차이가 아니라 **�
       H100 대비 저렴하면서 데이터센터급이라 MI300X 와의 대비가 성립한다 (4090 이었다면 성립 안 함).
       A100 은 compute capability 8.0 이므로 **§3 의 TF32 자동 활성 조건에 그대로 해당한다.**
       fp32 강제 측정을 생략할 수 없다.
+- [x] **빌드 환경 확정 → `kernel-bridge/rocm:6.3`** (베이스 `rocm/dev-ubuntu-22.04:6.3`,
+      ROCm 6.3.0-39). 2026-08-02, i7-6700K / WSL2 / docker 에서 실측.
+      gfx942 오브젝트 15,312 bytes 생성 확인 — **GPU 없이 컴파일 가능함이 증명됨.**
+      `rocm/dev-ubuntu-22.04:6.2` 는 배제한다: `ld.lld` / `llvm-link` / `opt` 가
+      `--version` 조차 SEGV 로 죽어 device 링크(`amdgcn-link`) 단계에서 실패한다.
+      호스트 컴파일과 device IR 생성까지는 정상이라 원인을 오해하기 쉽다.
+      6.2 는 hipcc·hipify-perl 을 perl 스크립트로 넣고 full perl 패키지를 누락하는 문제도 있다.
 - [ ] `hipify-perl` vs `hipify-clang` — perl 은 텍스트 치환이라 R1 을 못 잡고,
       clang 은 AST 기반이라 더 잡지만 빌드 환경 요구가 크다.
       **계획대로 perl 로 시작**하되 못 잡은 항목을 로그에 남기는 것이 오히려 지표가 된다.

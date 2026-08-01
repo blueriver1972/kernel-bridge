@@ -53,7 +53,9 @@ CPU 컨테이너에서 끝내고, MI300X는 "실행" 단계에서만 켠다.
 
 ## 환경
 - 클라우드: RunPod MI300X 1장 (백업: TensorWave) — 코딩 중 인스턴스 OFF
-- 이미지: `rocm/pytorch` 또는 `rocm/dev-ubuntu-22.04` 공식 도커 (베어메탈 ROCm 설치 금지)
+- 이미지: Phase 2 는 `docker/Dockerfile` (베이스 `rocm/dev-ubuntu-22.04:**6.3**`),
+  Phase 3 는 `rocm/pytorch` 공식 도커 (베어메탈 ROCm 설치 금지)
+  ※ **6.2 는 쓰지 않는다** — 링커(`ld.lld`)가 SEGV 로 죽는다. 근거는 `docker/Dockerfile` 주석
 - NVIDIA 비교: **A100 (sm_80)** 1~2시간 — 확정. H100 대비 저렴하고 데이터센터급이라
   MI300X 와 대비했을 때 보고서 신뢰도가 유지된다
 - 예산: 총 **$15~20**

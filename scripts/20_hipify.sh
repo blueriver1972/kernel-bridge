@@ -2,7 +2,7 @@
 # Phase 2a — hipify (★ GPU 불필요 ★)
 #
 # ROCm 도커 컨테이너 안에서 CPU 만으로 돈다. MI300X 를 켜지 말 것.
-#   docker run --rm -it -v "$PWD":/w -w /w rocm/dev-ubuntu-22.04:6.2 \
+#   docker run --rm -it -v "$PWD":/w -w /w kernel-bridge/rocm:6.3 \
 #       bash scripts/20_hipify.sh
 #
 # 원본은 절대 수정하지 않는다. 출력은 02-convert/hipify-out/ 로만 나간다.

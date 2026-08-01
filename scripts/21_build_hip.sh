@@ -4,7 +4,7 @@
 # 이 프로젝트에서 가장 오래 걸리는 구간이다. GPU 과금 밖에서 끝낸다.
 # --offload-arch 를 명시하므로 로컬에 AMD GPU 가 없어도 MI300X 코드가 생성된다.
 #
-#   docker run --rm -it -v "$PWD":/w -w /w rocm/dev-ubuntu-22.04:6.2 \
+#   docker run --rm -it -v "$PWD":/w -w /w kernel-bridge/rocm:6.3 \
 #       bash scripts/21_build_hip.sh
 #
 # 에러가 나면 종료하지 않고 전부 모아서 로그로 남긴다 — 에러 1건 = 이슈 로그 1줄.

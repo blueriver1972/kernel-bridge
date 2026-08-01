@@ -9,7 +9,9 @@
 | ✅ | Phase 0 — 저장소·구조·하네스·범위 확정·스크립트 | 완료 |
 | ✅ | WSL2 설치 (2.7.11.0 / 커널 6.18.33.2) | 완료 |
 | ✅ | Ubuntu-22.04 설치 (VERSION 2, 사용자 생성 완료) | 완료 |
-| ⬜ | **Phase 2 환경 (docker + ROCm 이미지)** | ← **여기부터 (STEP 2)** |
+| ✅ | WSL 디스크를 D:\wsl 로 이동 (C: 공간 부족 해결) | 완료 |
+| ✅ | Phase 2 환경 — docker + `kernel-bridge/rocm:6.3`, gfx942 컴파일 검증 통과 | 완료 |
+| ⬜ | **Phase 2 실행 (hipify + 컴파일 루프)** | ← **여기부터 (STEP 3)** |
 | ⬜ | Phase 1 — A100 기준선 | |
 | ⬜ | Phase 2 — hipify + 컴파일 수정 루프 | |
 | ⬜ | Phase 3 — MI300X 검증 | |
