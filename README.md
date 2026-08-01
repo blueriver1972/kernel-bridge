@@ -32,7 +32,7 @@ flash 커널에는 없어서 [00-src/flash_attention_test.cu](00-src/flash_atten
 | Phase | 스크립트 | GPU | 시간 | 비용 |
 |---|---|---|---|---|
 | 0 | `00_fetch_sources.sh` | 없음 | 1분 | $0 |
-| 1 | `10_baseline_nvidia.sh` | A100/H100 | 1~2h | ~$5 |
+| 1 | `10_baseline_nvidia.sh` | A100 (sm_80) | 1~2h | ~$5 |
 | 2a | `20_hipify.sh` | **없음** | 5분 | $0 |
 | 2b | `21_build_hip.sh` | **없음** | 수 시간 | $0 |
 | 3 | `30_verify_mi300x.sh` | MI300X | 2~3h | ~$10 |
@@ -54,7 +54,8 @@ CPU 컨테이너에서 끝내고, MI300X는 "실행" 단계에서만 켠다.
 ## 환경
 - 클라우드: RunPod MI300X 1장 (백업: TensorWave) — 코딩 중 인스턴스 OFF
 - 이미지: `rocm/pytorch` 또는 `rocm/dev-ubuntu-22.04` 공식 도커 (베어메탈 ROCm 설치 금지)
-- NVIDIA 비교: **A100 또는 H100** 1시간 (4090은 데이터센터급 MI300X와 대비 시 신뢰도 하락)
+- NVIDIA 비교: **A100 (sm_80)** 1~2시간 — 확정. H100 대비 저렴하고 데이터센터급이라
+  MI300X 와 대비했을 때 보고서 신뢰도가 유지된다
 - 예산: 총 **$15~20**
 
 ## 원칙

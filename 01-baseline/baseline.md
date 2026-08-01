@@ -7,11 +7,11 @@
 
 | 항목 | 값 |
 |---|---|
-| GPU | |
+| GPU | A100 (확정) |
 | 드라이버 | |
 | CUDA 버전 | |
-| nvcc arch | |
-| 컴파일 플래그 | `-O3 --use_fast_math -arch=___ -lcublas -lcublasLt` |
+| nvcc arch | `sm_80` |
+| 컴파일 플래그 | `-O3 --use_fast_math -arch=sm_80 -lcublas -lcublasLt` |
 | 측정 일시 | |
 
 ## softmax_forward.cu

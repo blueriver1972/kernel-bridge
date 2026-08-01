@@ -6,7 +6,7 @@
 | # | 스크립트 | GPU | 예상 시간 | 비용 |
 |---|---|---|---|---|
 | 00 | `00_fetch_sources.sh` | 없음 | 1분 | $0 |
-| 10 | `10_baseline_nvidia.sh` | **NVIDIA A100/H100** | 1~2h | ~$5 |
+| 10 | `10_baseline_nvidia.sh` | **NVIDIA A100 (sm_80)** | 1~2h | ~$5 |
 | 20 | `20_hipify.sh` | 없음 (CPU 컨테이너) | 5분 | $0 |
 | 21 | `21_build_hip.sh` | 없음 (CPU 컨테이너) | **수 시간 (수정 루프)** | $0 |
 | 30 | `30_verify_mi300x.sh` | **MI300X** | 2~3h | ~$10 |
@@ -41,11 +41,13 @@ GPU 패스스루가 필요 없습니다 — hipify와 컴파일만 하기 때문
 ## 아키텍처 지정
 
 `--offload-arch` / `-arch` 를 명시하지 않으면 컴파일러가 로컬 GPU를 찾으려 하고,
-GPU 없는 머신에서는 실패하거나 엉뚱한 타깃이 나옵니다. 환경변수로 덮어씁니다.
+GPU 없는 머신에서는 실패하거나 엉뚱한 타깃이 나옵니다.
+
+기본값이 확정 구성(**A100 = `sm_80`**, **MI300X = `gfx942`**)이므로 인자 없이 돌리면 됩니다.
+다른 GPU 를 잡게 되면 환경변수로 덮어씁니다.
 
 ```bash
-NV_ARCH=sm_90 bash scripts/10_baseline_nvidia.sh   # H100
-AMD_ARCH=gfx942 bash scripts/21_build_hip.sh       # MI300X (기본값)
+NV_ARCH=sm_90 bash scripts/10_baseline_nvidia.sh   # H100 으로 바꿀 경우에만
 ```
 
 ## 자동 시간 기록

@@ -3,14 +3,16 @@
 결과는 [baseline.md](baseline.md) 에, 원시 로그는 `raw/` 에 들어간다.
 
 ## 실행
+비교 GPU 는 **A100 (sm_80) 확정** — `NV_ARCH` 기본값이므로 인자 없이 돈다.
 ```bash
-NV_ARCH=sm_80 bash scripts/10_baseline_nvidia.sh   # A100. H100 이면 sm_90
+bash scripts/10_baseline_nvidia.sh
 ```
 빌드 → 환경 기록 → 커널 버전 전수 실행까지 한 번에 돈다.
 
 ## 할 일
-- [ ] NVIDIA GPU 인스턴스 확보 — **A100 또는 H100** (~$3/h × 1~2h)
+- [ ] NVIDIA **A100** 인스턴스 확보 (~$1.5~3/h × 1~2h)
       4090 은 데이터센터급 MI300X 와 대비했을 때 보고서 신뢰도가 떨어진다
+      A100 40GB 로 충분하다 (attention_forward 의 preatt/att 가 각 402MB)
 - [ ] `scripts/00_fetch_sources.sh` 로 llm.c 확보 (커밋 SHA 고정)
 - [ ] `scripts/10_baseline_nvidia.sh` 실행
 - [ ] `raw/*.log` → `baseline.md` 표로 옮기기

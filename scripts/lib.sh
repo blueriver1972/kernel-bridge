@@ -13,8 +13,9 @@ BIN="$ROOT/bin"
 # 재현성 고정 — scope.md 에 기록된 커밋
 LLM_C_SHA="f1e2ace651495b74ae22d45d1723443fd00ecd3a"
 
-# 아키텍처. 환경에 맞게 덮어쓸 것.
+# 아키텍처 (확정: NVIDIA 비교 GPU = A100).
 #   A100=sm_80  H100=sm_90   /   MI300X=gfx942
+# A100 도 compute capability 8.0 이라 TF32 가 자동으로 켜진다 — scope.md §3 규칙은 그대로 적용.
 NV_ARCH="${NV_ARCH:-sm_80}"
 AMD_ARCH="${AMD_ARCH:-gfx942}"
 
