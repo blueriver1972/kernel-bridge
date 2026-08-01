@@ -53,10 +53,20 @@ Get-Process wsl -ErrorAction SilentlyContinue | ForEach-Object {
     try { $_.Kill() } catch {}
 }
 
+# WSL2 가 쓸 준비가 됐는지 판정.
+# 주의: Store판 WSL(2.x)은 system32\lxss\tools\kernel 을 쓰지 않는다.
+#       커널 파일 존재만으로 판정하면 설치가 끝났는데도 실패로 읽는다.
+#       Store판은 `wsl --version` 을 지원하므로 그걸 1차 신호로 쓴다.
+function Test-WslReady {
+    $v = & wsl.exe --version 2>&1
+    if ($LASTEXITCODE -eq 0 -and $v) { return $true }   # Store판
+    return (Test-Path $KernelPath)                       # inbox판 + MSI 커널
+}
+
 # --- 1. WSL2 커널 ---------------------------------------------------------
 Step "WSL2 커널 설치"
-if (Test-Path $KernelPath) {
-    Ok "커널 이미 있음"
+if (Test-WslReady) {
+    Ok "WSL2 이미 준비됨 — 이 단계 건너뜀"
 } else {
     # ★ --web-download 를 먼저 쓴다. 이 PC 에서 plain --update 는 멈춘다.
     if (-not (Invoke-WslTimed -WslArgs @('--update','--web-download') -TimeoutSec 420 -Label 'wsl --update --web-download')) {
@@ -64,10 +74,10 @@ if (Test-Path $KernelPath) {
         Invoke-WslTimed -WslArgs @('--update') -TimeoutSec 180 -Label 'wsl --update' | Out-Null
     }
 
-    if (Test-Path $KernelPath) {
-        Ok "커널 설치 완료"
+    if (Test-WslReady) {
+        Ok "WSL2 설치 완료"
     } else {
-        Fail "커널이 설치되지 않았습니다."
+        Fail "WSL2 가 설치되지 않았습니다."
         Write-Host @"
 
   수동 설치가 필요합니다 (1회, 약 15MB):
