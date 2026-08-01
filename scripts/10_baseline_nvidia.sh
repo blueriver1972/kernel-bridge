@@ -19,12 +19,21 @@ cp "$VENDOR"/{attention_forward.cu,softmax_forward.cu,common.h} "$WORK/"
 cp "$SRC"/flash_attention_simplified.cu "$SRC"/flash_attention_test.cu "$WORK/"
 
 # --- fp32 강제 사본 만들기 (원본은 건드리지 않는다) ---
+# TF32 대상은 attention 뿐이다. softmax_forward.cu 는 cuBLAS 를 쓰지 않는다
+# (2026-08-02 확인: 파일 안 'cublas' 는 5행 컴파일 예시 주석 1건뿐).
+# 따라서 softmax 를 두 벌 빌드하면 완전히 동일한 바이너리로 유료 GPU 시간만 쓴다.
 mkdir -p "$WORK/fp32"
-cp "$WORK"/{attention_forward.cu,softmax_forward.cu,common.h} "$WORK/fp32/"
+cp "$WORK"/{attention_forward.cu,common.h} "$WORK/fp32/"
 sed -i 's/int enable_tf32 = [^;]*;/int enable_tf32 = 0;/' \
-    "$WORK/fp32/common.h" "$WORK/fp32/attention_forward.cu" "$WORK/fp32/softmax_forward.cu"
-grep -n "int enable_tf32" "$WORK/fp32/common.h" "$WORK/fp32/attention_forward.cu" \
-    || die "TF32 강제 패치 실패 — 소스 구조가 바뀌었는지 확인하세요."
+    "$WORK/fp32/common.h" "$WORK/fp32/attention_forward.cu"
+
+# 값이 실제로 0 이 됐는지까지 확인한다. 'int enable_tf32' 존재만 보면
+# 패치가 안 먹었어도 통과해 버린다.
+for f in common.h attention_forward.cu; do
+    grep -q "int enable_tf32 = 0;" "$WORK/fp32/$f" \
+        || die "TF32 강제 패치 실패: $f — llm.c 소스 구조가 바뀌었는지 확인하세요."
+done
+log "TF32 강제 패치 확인됨 (common.h, attention_forward.cu)"
 
 NVFLAGS="-O3 --use_fast_math -arch=$NV_ARCH -lcublas -lcublasLt"
 
