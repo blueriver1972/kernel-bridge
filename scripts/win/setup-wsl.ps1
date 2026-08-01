@@ -22,10 +22,13 @@ function Warn($m) { Write-Host "  !   $m"   -ForegroundColor Yellow }
 function Fail($m) { Write-Host "  X   $m"   -ForegroundColor Red }
 
 # 타임아웃을 건 wsl 실행. 초과하면 죽이고 $false 를 돌려준다.
+# 주의: 매개변수 이름으로 $Args 를 쓰면 안 된다 — PowerShell 자동 변수와 충돌해
+#       명명된 인수로 넘겨도 빈 값이 된다.
 function Invoke-WslTimed {
-    param([string[]]$Args, [int]$TimeoutSec = 300, [string]$Label = 'wsl')
-    Write-Host "  > wsl $($Args -join ' ')  (최대 $TimeoutSec 초)" -ForegroundColor DarkGray
-    $p = Start-Process -FilePath 'wsl.exe' -ArgumentList $Args -PassThru -NoNewWindow
+    param([string[]]$WslArgs, [int]$TimeoutSec = 300, [string]$Label = 'wsl')
+    Write-Host "  > wsl $($WslArgs -join ' ')  (최대 $TimeoutSec 초)" -ForegroundColor DarkGray
+    $p = Start-Process -FilePath 'wsl.exe' -ArgumentList $WslArgs -PassThru -NoNewWindow
+    $null = $p.Handle   # ExitCode 를 읽으려면 핸들을 잡아둬야 한다
     if (-not $p.WaitForExit($TimeoutSec * 1000)) {
         Warn "$Label — ${TimeoutSec}초 초과. 중단합니다."
         try { $p.Kill() } catch {}
@@ -56,9 +59,9 @@ if (Test-Path $KernelPath) {
     Ok "커널 이미 있음"
 } else {
     # ★ --web-download 를 먼저 쓴다. 이 PC 에서 plain --update 는 멈춘다.
-    if (-not (Invoke-WslTimed -Args @('--update','--web-download') -TimeoutSec 420 -Label 'wsl --update --web-download')) {
+    if (-not (Invoke-WslTimed -WslArgs @('--update','--web-download') -TimeoutSec 420 -Label 'wsl --update --web-download')) {
         Warn "웹 다운로드 실패. 표준 경로로 한 번 더 시도합니다."
-        Invoke-WslTimed -Args @('--update') -TimeoutSec 180 -Label 'wsl --update' | Out-Null
+        Invoke-WslTimed -WslArgs @('--update') -TimeoutSec 180 -Label 'wsl --update' | Out-Null
     }
 
     if (Test-Path $KernelPath) {
@@ -78,13 +81,13 @@ if (Test-Path $KernelPath) {
 
 # --- 2. 기본 버전 2 --------------------------------------------------------
 Step "기본 WSL 버전을 2로 설정"
-Invoke-WslTimed -Args @('--set-default-version','2') -TimeoutSec 60 -Label 'set-default-version' | Out-Null
+Invoke-WslTimed -WslArgs @('--set-default-version','2') -TimeoutSec 60 -Label 'set-default-version' | Out-Null
 Ok "완료 (Docker 는 WSL2 에서만 동작)"
 
 # --- 3. Ubuntu ------------------------------------------------------------
 Step "Ubuntu-22.04 설치"
 $distro = 'Ubuntu-22.04'
-$installed = Invoke-WslTimed -Args @('--install','-d',$distro) -TimeoutSec 900 -Label 'wsl --install'
+$installed = Invoke-WslTimed -WslArgs @('--install','-d',$distro) -TimeoutSec 900 -Label 'wsl --install'
 
 if (-not $installed) {
     Warn "Store 경유 설치가 실패하거나 멈췄습니다."
