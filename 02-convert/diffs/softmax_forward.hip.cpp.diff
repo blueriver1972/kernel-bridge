@@ -1,0 +1,86 @@
+--- /w/vendor/llm.c/dev/cuda/softmax_forward.cu	2026-08-01 14:43:57.359645100 +0000
++++ /w/02-convert/hipify-out/softmax_forward.hip.cpp	2026-08-01 22:32:19.364238100 +0000
+@@ -1,3 +1,4 @@
++#include "hip/hip_runtime.h"
+ /*
+ Kernels for softmax forward pass.
+ 
+@@ -30,8 +31,8 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <assert.h>
+-#include <cuda_runtime.h>
+-#include <cooperative_groups.h>
++#include <hip/hip_runtime.h>
++#include <hip/hip_cooperative_groups.h>
+ #include <cooperative_groups/reduce.h>
+ #include "common.h"
+ 
+@@ -569,7 +570,7 @@
+ void softmax_forward1(float* out, const float* inp, int N, int C, const int block_size) {
+     const int grid_size = ceil_div(N, block_size);
+     softmax_forward_kernel1<<<grid_size, block_size>>>(out, inp, N, C);
+-    cudaCheck(cudaGetLastError());
++    cudaCheck(hipGetLastError());
+ }
+ 
+ void softmax_forward2(float* out, const float* inp, int N, int C, const int block_size) {
+@@ -595,13 +596,13 @@
+ void softmax_forward_online1(float* out, const float* inp, int N, int C, int block_size) {
+     const int grid_size = ceil_div(N, block_size);
+     softmax_forward_online_kernel1 <<<grid_size, block_size >>> (out, inp, N, C);
+-    cudaCheck(cudaGetLastError());
++    cudaCheck(hipGetLastError());
+ }
+ 
+ void softmax_forward_online2(float* out, const float* inp, int N, int C, int block_size) {
+     const int grid_size = ceil_div(N * 32, block_size);
+     softmax_forward_online_kernel2 <<<grid_size, block_size >>> (out, inp, N, C);
+-    cudaCheck(cudaGetLastError());
++    cudaCheck(hipGetLastError());
+ }
+ 
+ void softmax_forward7(float* out, const float* inp, int N, int C, int block_size) {
+@@ -613,7 +614,7 @@
+ void softmax_forward_online8(float* out, const float* inp, int N, int C, int block_size) {
+     const int grid_size = ceil_div(N * 32, block_size);
+     softmax_forward_online_kernel8<<<grid_size, block_size>>>(out, inp, N, C);
+-    cudaCheck(cudaGetLastError());
++    cudaCheck(hipGetLastError());
+ }
+ 
+ // kernel version dispatch
+@@ -659,7 +660,7 @@
+     int V = 50257;
+ 
+     int deviceIdx = 0;
+-    cudaCheck(cudaSetDevice(deviceIdx));
++    cudaCheck(hipSetDevice(deviceIdx));
+ 
+     // create host memory of random numbers
+     float* out = (float*)malloc(B * T * V * sizeof(float));
+@@ -677,9 +678,9 @@
+     // move to GPU
+     float* d_out;
+     float* d_inp;
+-    cudaCheck(cudaMalloc(&d_out, B * T * V * sizeof(float)));
+-    cudaCheck(cudaMalloc(&d_inp, B * T * V * sizeof(float)));
+-    cudaCheck(cudaMemcpy(d_inp, inp, B * T * V * sizeof(float), cudaMemcpyHostToDevice));
++    cudaCheck(hipMalloc(&d_out, B * T * V * sizeof(float)));
++    cudaCheck(hipMalloc(&d_inp, B * T * V * sizeof(float)));
++    cudaCheck(hipMemcpy(d_inp, inp, B * T * V * sizeof(float), hipMemcpyHostToDevice));
+ 
+     // read kernel_num from command line
+     int kernel_num = 1;
+@@ -726,8 +727,8 @@
+     free(out);
+     free(inp);
+     free((void*)outliers);
+-    cudaCheck(cudaFree(d_out));
+-    cudaCheck(cudaFree(d_inp));
++    cudaCheck(hipFree(d_out));
++    cudaCheck(hipFree(d_inp));
+ 
+     return 0;
+ }
+\ No newline at end of file

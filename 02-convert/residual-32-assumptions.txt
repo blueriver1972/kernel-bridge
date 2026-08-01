@@ -1,0 +1,30 @@
+/w/02-convert/hipify-out/attention_forward.hip.cpp:239:        val = fmaxf(val, __shfl_down_sync(0xFFFFFFFF, val, offset));
+/w/02-convert/hipify-out/attention_forward.hip.cpp:255:    int warpId = threadIdx.x / 32; // warp index within a block
+/w/02-convert/hipify-out/attention_forward.hip.cpp:256:    int laneId = threadIdx.x % 32; // thread index within a warp
+/w/02-convert/hipify-out/attention_forward.hip.cpp:259:    int warpsPerBlock = blockDim.x / 32;
+/w/02-convert/hipify-out/attention_forward.hip.cpp:351:    cg::thread_block_tile<32> warp = cg::tiled_partition<32>(block);
+/w/02-convert/hipify-out/attention_forward.hip.cpp:624:    cg::thread_block_tile<32> warp = cg::tiled_partition<32>(block);
+/w/02-convert/hipify-out/attention_forward.hip.cpp:819:    size_t shared_mem_size = 2 * softmax_block_size / 32 * sizeof(float);
+/w/02-convert/hipify-out/attention_forward.hip.cpp:906:    cg::thread_block_tile<32> warp = cg::tiled_partition<32>(block);
+/w/02-convert/hipify-out/softmax_forward.hip.cpp:18:so it can tolerate any block_size % 32 == 0. this is hopefully the most efficient version
+/w/02-convert/hipify-out/softmax_forward.hip.cpp:179:        val = fmaxf(val, __shfl_down_sync(0xFFFFFFFF, val, offset));
+/w/02-convert/hipify-out/softmax_forward.hip.cpp:199:    float offset = __shfl_sync(0xFFFFFFFF, maxval, 0);
+/w/02-convert/hipify-out/softmax_forward.hip.cpp:233:    int warpId = threadIdx.x / 32; // warp index within a block
+/w/02-convert/hipify-out/softmax_forward.hip.cpp:234:    int laneId = threadIdx.x % 32; // thread index within a warp
+/w/02-convert/hipify-out/softmax_forward.hip.cpp:237:    int warpsPerBlock = blockDim.x / 32;
+/w/02-convert/hipify-out/softmax_forward.hip.cpp:359:	cg::thread_block_tile<32> warp = cg::tiled_partition<32>(block);
+/w/02-convert/hipify-out/softmax_forward.hip.cpp:401:    const int warpsPerBlock = blockDim.x / 32;
+/w/02-convert/hipify-out/softmax_forward.hip.cpp:406:    int warpId = threadIdx.x / 32; // warp index within a block
+/w/02-convert/hipify-out/softmax_forward.hip.cpp:407:    int laneId = threadIdx.x % 32; // thread index within a warp
+/w/02-convert/hipify-out/softmax_forward.hip.cpp:546:        offsetMaxval = __shfl_down_sync(0xFFFFFFFF, maxval, offset);
+/w/02-convert/hipify-out/softmax_forward.hip.cpp:547:        offsetSumval = __shfl_down_sync(0xFFFFFFFF, sumval, offset);
+/w/02-convert/hipify-out/softmax_forward.hip.cpp:559:    maxval = __shfl_sync(0xFFFFFFFF, maxval, 0);
+/w/02-convert/hipify-out/softmax_forward.hip.cpp:560:    sumval = __shfl_sync(0xFFFFFFFF, sumval, 0);
+/w/02-convert/hipify-out/softmax_forward.hip.cpp:592:    size_t shared_mem_size = block_size / 32 * sizeof(float);
+/w/02-convert/hipify-out/softmax_forward.hip.cpp:610:    size_t shared_mem_size = 2 * block_size / 32 * sizeof(float);
+/w/02-convert/hipify-out/common.h:9:#define WARP_SIZE 32U
+/w/02-convert/hipify-out/common.h:19:        val += __shfl_xor_sync(0xFFFFFFFF, val, offset);
+/w/02-convert/hipify-out/common.h:34:    __shared__ float shared_val[WARP_SIZE];
+/w/02-convert/hipify-out/common.h:35:    const int lane_id = threadIdx.x % WARP_SIZE;
+/w/02-convert/hipify-out/common.h:36:    const int warp_id = threadIdx.x / WARP_SIZE;
+/w/02-convert/hipify-out/common.h:37:    const int num_warps = blockDim.x / WARP_SIZE;

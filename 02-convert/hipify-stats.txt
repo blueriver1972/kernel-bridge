@@ -1,0 +1,10 @@
+=== common.h -> common.h ===
+46
+=== softmax_forward.cu -> softmax_forward.hip.cpp ===
+14
+=== attention_forward.cu -> attention_forward.hip.cpp ===
+68
+=== flash_attention_simplified.cu -> flash_attention_simplified.hip.cpp ===
+6
+=== flash_attention_test.cu -> flash_attention_test.hip.cpp ===
+30

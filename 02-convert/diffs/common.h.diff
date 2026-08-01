@@ -1,0 +1,191 @@
+--- /w/vendor/llm.c/dev/cuda/common.h	2026-08-01 14:43:57.341576800 +0000
++++ /w/02-convert/hipify-out/common.h	2026-08-01 22:32:03.151364200 +0000
+@@ -1,12 +1,13 @@
++#include "hip/hip_runtime.h"
+ #include <stdlib.h>
+ #include <stdio.h>
+-#include <cuda_runtime.h>
+-#include <cublas_v2.h>
+-#include <cublasLt.h>
++#include <hip/hip_runtime.h>
++#include <hipblas.h>
++#include <hipblaslt.h>
+ #include <float.h>
+ 
+ #define WARP_SIZE 32U
+-extern cudaDeviceProp deviceProp;
++extern hipDeviceProp_t deviceProp;
+ 
+ template<class T>
+ __host__ __device__ T ceil_div(T dividend, T divisor) {
+@@ -57,19 +58,19 @@
+ // checking utils
+ 
+ // CUDA error checking
+-void cuda_check(cudaError_t error, const char *file, int line) {
+-    if (error != cudaSuccess) {
++void cuda_check(hipError_t error, const char *file, int line) {
++    if (error != hipSuccess) {
+         printf("[CUDA ERROR] at file %s:%d:\n%s\n", file, line,
+-               cudaGetErrorString(error));
++               hipGetErrorString(error));
+         exit(EXIT_FAILURE);
+     }
+ };
+ #define cudaCheck(err) (cuda_check(err, __FILE__, __LINE__))
+ 
+ // cuBLAS error checking
+-void cublasCheck(cublasStatus_t status, const char *file, int line)
++void cublasCheck(hipblasStatus_t status, const char *file, int line)
+ {
+-    if (status != CUBLAS_STATUS_SUCCESS) {
++    if (status != HIPBLAS_STATUS_SUCCESS) {
+         printf("[cuBLAS ERROR]: %d %s %d\n", status, file, line);
+         exit(EXIT_FAILURE);
+     }
+@@ -83,9 +84,9 @@
+ // cuBLAS workspace. Hardcoding to 32MiB but only Hopper needs 32, for others 4 is OK
+ static size_t cublaslt_workspace_size = 32 * 1024 * 1024;
+ static void* cublaslt_workspace = NULL;
+-static cublasComputeType_t cublas_compute_type;
+-cublasHandle_t cublas_handle;
+-cublasLtHandle_t cublaslt_handle;
++static hipblasComputeType_t cublas_compute_type;
++hipblasHandle_t cublas_handle;
++hipblasLtHandle_t cublaslt_handle;
+ int cuda_arch_major = 0;
+ int cuda_arch_minor = 0;
+ int cuda_num_SMs = 0; // for persistent threads where we want 1 threadblock per SM
+@@ -183,11 +184,11 @@
+ 
+ #if defined(ENABLE_BF16)
+ 
+-typedef __nv_bfloat16 floatX;
+-typedef __nv_bfloat16 floatN;
+-#define CUBLAS_LOWP CUDA_R_16BF // CUDA_R_16F or CUDA_R_16BF (or CUDA_R_32F)
+-// CUBLAS_COMPUTE_32F or CUBLAS_COMPUTE_16F (for CUDA_R_16F only, potentially slower?!)
+-#define CUBLAS_LOWP_COMPUTE CUBLAS_COMPUTE_32F
++typedef hip_bfloat16 floatX;
++typedef hip_bfloat16 floatN;
++#define CUBLAS_LOWP HIP_R_16BF // HIP_R_16F or HIP_R_16BF (or HIP_R_32F)
++// HIPBLAS_COMPUTE_32F or HIPBLAS_COMPUTE_16F (for HIP_R_16F only, potentially slower?!)
++#define CUBLAS_LOWP_COMPUTE HIPBLAS_COMPUTE_32F
+ 
+ #elif defined(ENABLE_FP16)
+ 
+@@ -264,17 +265,17 @@
+ // testing and benchmarking utils
+ 
+ template<class TargetType>
+-[[nodiscard]] cudaError_t memcpy_convert(TargetType* d_ptr, float* h_ptr, size_t count) {
++[[nodiscard]] hipError_t memcpy_convert(TargetType* d_ptr, float* h_ptr, size_t count) {
+     // copy from host to device with data type conversion.
+     TargetType* converted = (TargetType*)malloc(count * sizeof(TargetType));
+     for (int i = 0; i < count; i++) {
+         converted[i] = (TargetType)h_ptr[i];
+     }
+ 
+-    cudaError_t status = cudaMemcpy(d_ptr, converted, count * sizeof(TargetType), cudaMemcpyHostToDevice);
++    hipError_t status = hipMemcpy(d_ptr, converted, count * sizeof(TargetType), hipMemcpyHostToDevice);
+     free(converted);
+ 
+-    // instead of checking the status at cudaMemcpy, we return it from here. This way, we
++    // instead of checking the status at hipMemcpy, we return it from here. This way, we
+     // still need to use our checking macro, and get better line info as to where the error
+     // happened.
+     return status;
+@@ -285,32 +286,32 @@
+ 
+     // set up the device
+     int deviceIdx = 0;
+-    cudaCheck(cudaSetDevice(deviceIdx));
+-    cudaDeviceProp deviceProp;
+-    cudaGetDeviceProperties(&deviceProp, deviceIdx);
++    cudaCheck(hipSetDevice(deviceIdx));
++    hipDeviceProp_t deviceProp;
++    hipGetDeviceProperties(&deviceProp, deviceIdx);
+     cuda_num_SMs = deviceProp.multiProcessorCount;
+     cuda_threads_per_SM = deviceProp.maxThreadsPerMultiProcessor;
+     cuda_arch_major = deviceProp.major;
+     cuda_arch_minor = deviceProp.minor;
+ 
+     // setup cuBLAS and cuBLASLt
+-    cublasCheck(cublasCreate(&cublas_handle));
+-    cublasCheck(cublasLtCreate(&cublaslt_handle));
+-    cudaCheck(cudaMalloc(&cublaslt_workspace, cublaslt_workspace_size));
++    cublasCheck(hipblasCreate(&cublas_handle));
++    cublasCheck(hipblasLtCreate(&cublaslt_handle));
++    cudaCheck(hipMalloc(&cublaslt_workspace, cublaslt_workspace_size));
+ 
+     // TF32 precision is equivalent to torch.set_float32_matmul_precision('high')
+     int enable_tf32 = cuda_arch_major >= 8 ? 1 : 0;
+     // TODO implement common CLI for all tests/benchmarks
+     // if (override_enable_tf32 == 0) { enable_tf32 = 0; } // force to zero via arg
+-    cublas_compute_type = enable_tf32 ? CUBLAS_COMPUTE_32F_FAST_TF32 : CUBLAS_COMPUTE_32F;
+-    cublasMath_t cublas_math_mode = enable_tf32 ? CUBLAS_TF32_TENSOR_OP_MATH : CUBLAS_DEFAULT_MATH;
+-    cublasCheck(cublasSetMathMode(cublas_handle, cublas_math_mode));
++    cublas_compute_type = enable_tf32 ? HIPBLAS_COMPUTE_32F_FAST_TF32 : HIPBLAS_COMPUTE_32F;
++    hipblasMath_t cublas_math_mode = enable_tf32 ? HIPBLAS_TF32_TENSOR_OP_MATH : HIPBLAS_DEFAULT_MATH;
++    cublasCheck(hipblasSetMathMode(cublas_handle, cublas_math_mode));
+ }
+ 
+ template<class D, class T>
+ void validate_result(D* device_result, const T* cpu_reference, const char* name, std::size_t num_elements, T tolerance=1e-4) {
+     D* out_gpu = (D*)malloc(num_elements * sizeof(D));
+-    cudaCheck(cudaMemcpy(out_gpu, device_result, num_elements * sizeof(D), cudaMemcpyDeviceToHost));
++    cudaCheck(hipMemcpy(out_gpu, device_result, num_elements * sizeof(D), hipMemcpyDeviceToHost));
+     int nfaults = 0;
+ #ifndef ENABLE_BF16
+     float epsilon = FLT_EPSILON;
+@@ -350,36 +351,36 @@
+ 
+ template<class Kernel, class... KernelArgs>
+ float benchmark_kernel(int repeats, Kernel kernel, KernelArgs&&... kernel_args) {
+-    cudaEvent_t start, stop;
++    hipEvent_t start, stop;
+     // prepare buffer to scrub L2 cache between benchmarks
+     // just memset a large dummy array, recommended by
+     // https://stackoverflow.com/questions/31429377/how-can-i-clear-flush-the-l2-cache-and-the-tlb-of-a-gpu
+     // and apparently used in nvbench.
+     int deviceIdx = 0;
+-    cudaCheck(cudaSetDevice(deviceIdx));
+-    cudaDeviceProp deviceProp;
+-    cudaCheck(cudaGetDeviceProperties(&deviceProp, deviceIdx));
++    cudaCheck(hipSetDevice(deviceIdx));
++    hipDeviceProp_t deviceProp;
++    cudaCheck(hipGetDeviceProperties(&deviceProp, deviceIdx));
+     void* flush_buffer;
+-    cudaCheck(cudaMalloc(&flush_buffer, deviceProp.l2CacheSize));
++    cudaCheck(hipMalloc(&flush_buffer, deviceProp.l2CacheSize));
+ 
+-    cudaCheck(cudaEventCreate(&start));
+-    cudaCheck(cudaEventCreate(&stop));
++    cudaCheck(hipEventCreate(&start));
++    cudaCheck(hipEventCreate(&stop));
+     float elapsed_time = 0.f;
+     for (int i = 0; i < repeats; i++) {
+         // clear L2
+-        cudaCheck(cudaMemset(flush_buffer, 0, deviceProp.l2CacheSize));
++        cudaCheck(hipMemset(flush_buffer, 0, deviceProp.l2CacheSize));
+         // now we can start recording the timing of the kernel
+-        cudaCheck(cudaEventRecord(start, nullptr));
++        cudaCheck(hipEventRecord(start, nullptr));
+         kernel(std::forward<KernelArgs>(kernel_args)...);
+-        cudaCheck(cudaEventRecord(stop, nullptr));
+-        cudaCheck(cudaEventSynchronize(start));
+-        cudaCheck(cudaEventSynchronize(stop));
++        cudaCheck(hipEventRecord(stop, nullptr));
++        cudaCheck(hipEventSynchronize(start));
++        cudaCheck(hipEventSynchronize(stop));
+         float single_call;
+-        cudaCheck(cudaEventElapsedTime(&single_call, start, stop));
++        cudaCheck(hipEventElapsedTime(&single_call, start, stop));
+         elapsed_time += single_call;
+     }
+ 
+-    cudaCheck(cudaFree(flush_buffer));
++    cudaCheck(hipFree(flush_buffer));
+ 
+     return elapsed_time / repeats;
+ }
+\ No newline at end of file

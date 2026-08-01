@@ -1,0 +1,109 @@
+--- /w/00-src/flash_attention_test.cu	2026-08-01 14:43:17.307097200 +0000
++++ /w/02-convert/hipify-out/flash_attention_test.hip.cpp	2026-08-01 22:32:56.627689500 +0000
+@@ -15,7 +15,7 @@
+ #include <cstring>
+ #include <cmath>
+ #include <vector>
+-#include <cuda_runtime.h>
++#include <hip/hip_runtime.h>
+ 
+ // 원본 커널의 #define 과 반드시 일치해야 한다 (원본 불변 원칙 때문에 중복 정의).
+ // 원본에서 값을 바꾸면 여기도 바꾼다.
+@@ -28,10 +28,10 @@
+ 
+ #define CUDA_CHECK(expr)                                                       \
+     do {                                                                       \
+-        cudaError_t _e = (expr);                                               \
+-        if (_e != cudaSuccess) {                                               \
++        hipError_t _e = (expr);                                               \
++        if (_e != hipSuccess) {                                               \
+             std::fprintf(stderr, "[FATAL] %s:%d %s -> %s\n", __FILE__,         \
+-                         __LINE__, #expr, cudaGetErrorString(_e));             \
++                         __LINE__, #expr, hipGetErrorString(_e));             \
+             std::exit(1);                                                      \
+         }                                                                      \
+     } while (0)
+@@ -102,9 +102,9 @@
+     }
+ 
+     int dev = 0;
+-    cudaDeviceProp prop;
+-    CUDA_CHECK(cudaGetDevice(&dev));
+-    CUDA_CHECK(cudaGetDeviceProperties(&prop, dev));
++    hipDeviceProp_t prop;
++    CUDA_CHECK(hipGetDevice(&dev));
++    CUDA_CHECK(hipGetDeviceProperties(&prop, dev));
+ 
+     const size_t elems = (size_t)N * HEAD_DIM;
+     const double scale = 1.0 / std::sqrt((double)HEAD_DIM);
+@@ -115,19 +115,19 @@
+     for (size_t i = 0; i < elems; ++i) hV[i] = next_uniform();
+ 
+     float *dQ, *dK, *dV, *dO;
+-    CUDA_CHECK(cudaMalloc(&dQ, elems * sizeof(float)));
+-    CUDA_CHECK(cudaMalloc(&dK, elems * sizeof(float)));
+-    CUDA_CHECK(cudaMalloc(&dV, elems * sizeof(float)));
+-    CUDA_CHECK(cudaMalloc(&dO, elems * sizeof(float)));
+-    CUDA_CHECK(cudaMemcpy(dQ, hQ.data(), elems * sizeof(float), cudaMemcpyHostToDevice));
+-    CUDA_CHECK(cudaMemcpy(dK, hK.data(), elems * sizeof(float), cudaMemcpyHostToDevice));
+-    CUDA_CHECK(cudaMemcpy(dV, hV.data(), elems * sizeof(float), cudaMemcpyHostToDevice));
++    CUDA_CHECK(hipMalloc(&dQ, elems * sizeof(float)));
++    CUDA_CHECK(hipMalloc(&dK, elems * sizeof(float)));
++    CUDA_CHECK(hipMalloc(&dV, elems * sizeof(float)));
++    CUDA_CHECK(hipMalloc(&dO, elems * sizeof(float)));
++    CUDA_CHECK(hipMemcpy(dQ, hQ.data(), elems * sizeof(float), hipMemcpyHostToDevice));
++    CUDA_CHECK(hipMemcpy(dK, hK.data(), elems * sizeof(float), hipMemcpyHostToDevice));
++    CUDA_CHECK(hipMemcpy(dV, hV.data(), elems * sizeof(float), hipMemcpyHostToDevice));
+ 
+     // ---- 정확도 -----------------------------------------------------------
+     launch_flash_attention(dQ, dK, dV, dO, N);
+-    CUDA_CHECK(cudaGetLastError());          // 런치 실패를 조용히 넘기지 않는다
+-    CUDA_CHECK(cudaDeviceSynchronize());
+-    CUDA_CHECK(cudaMemcpy(hO.data(), dO, elems * sizeof(float), cudaMemcpyDeviceToHost));
++    CUDA_CHECK(hipGetLastError());          // 런치 실패를 조용히 넘기지 않는다
++    CUDA_CHECK(hipDeviceSynchronize());
++    CUDA_CHECK(hipMemcpy(hO.data(), dO, elems * sizeof(float), hipMemcpyDeviceToHost));
+ 
+     std::vector<double> refO(elems);
+     attention_reference(hQ, hK, hV, refO, N, scale);
+@@ -145,18 +145,18 @@
+     const bool pass = (max_rel <= tol) && std::isfinite(max_rel);
+ 
+     // ---- 타이밍 -----------------------------------------------------------
+-    cudaEvent_t ev0, ev1;
+-    CUDA_CHECK(cudaEventCreate(&ev0));
+-    CUDA_CHECK(cudaEventCreate(&ev1));
++    hipEvent_t ev0, ev1;
++    CUDA_CHECK(hipEventCreate(&ev0));
++    CUDA_CHECK(hipEventCreate(&ev1));
+     for (int i = 0; i < warmup; ++i) launch_flash_attention(dQ, dK, dV, dO, N);
+-    CUDA_CHECK(cudaDeviceSynchronize());
++    CUDA_CHECK(hipDeviceSynchronize());
+ 
+-    CUDA_CHECK(cudaEventRecord(ev0));
++    CUDA_CHECK(hipEventRecord(ev0));
+     for (int i = 0; i < iters; ++i) launch_flash_attention(dQ, dK, dV, dO, N);
+-    CUDA_CHECK(cudaEventRecord(ev1));
+-    CUDA_CHECK(cudaEventSynchronize(ev1));
++    CUDA_CHECK(hipEventRecord(ev1));
++    CUDA_CHECK(hipEventSynchronize(ev1));
+     float total_ms = 0.0f;
+-    CUDA_CHECK(cudaEventElapsedTime(&total_ms, ev0, ev1));
++    CUDA_CHECK(hipEventElapsedTime(&total_ms, ev0, ev1));
+     const double ms = total_ms / iters;
+ 
+     // QK^T 와 P@V 각각 2*N*N*d flop
+@@ -174,9 +174,9 @@
+                     (double)hO[worst], refO[worst]);
+     }
+ 
+-    CUDA_CHECK(cudaEventDestroy(ev0));
+-    CUDA_CHECK(cudaEventDestroy(ev1));
+-    CUDA_CHECK(cudaFree(dQ)); CUDA_CHECK(cudaFree(dK));
+-    CUDA_CHECK(cudaFree(dV)); CUDA_CHECK(cudaFree(dO));
++    CUDA_CHECK(hipEventDestroy(ev0));
++    CUDA_CHECK(hipEventDestroy(ev1));
++    CUDA_CHECK(hipFree(dQ)); CUDA_CHECK(hipFree(dK));
++    CUDA_CHECK(hipFree(dV)); CUDA_CHECK(hipFree(dO));
+     return pass ? 0 : 1;
+ }

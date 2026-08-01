@@ -1,0 +1,5 @@
+/w/02-convert/hipify-out/attention_forward.hip.cpp:52:10: fatal error: 'hipblas.h' file not found
+   52 | #include <hipblas.h>
+      |          ^~~~~~~~~~~
+1 error generated when compiling for gfx942.
+failed to execute:/opt/rocm-6.3.0/lib/llvm/bin/clang++  --offload-arch=gfx942 --driver-mode=g++ --hip-link  -O3 -ffast-math -I/w/02-convert/hipify-out -x hip /w/02-convert/hipify-out/attention_forward.hip.cpp -lhipblas -lhipblaslt -o "/w/bin/attention_hip"
