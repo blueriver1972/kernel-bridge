@@ -40,9 +40,15 @@ need() { command -v "$1" >/dev/null 2>&1 || die "'$1' 을 찾을 수 없습니�
 
 check_vendor() {
     [ -d "$VENDOR" ] || die "vendor/llm.c 가 없습니다. scripts/00_fetch_sources.sh 를 먼저 실행하세요."
+    # 컨테이너 안에서는 UID 가 달라 git 이 소유권을 의심하고 rev-parse 가 빈 값을 낸다
+    git config --global --add safe.directory '*' 2>/dev/null || true
     local sha
-    sha="$(git -C "$ROOT/vendor/llm.c" rev-parse HEAD)"
-    [ "$sha" = "$LLM_C_SHA" ] || warn "llm.c HEAD 불일치: $sha (기대: $LLM_C_SHA)"
+    sha="$(git -C "$ROOT/vendor/llm.c" rev-parse HEAD 2>/dev/null)"
+    if [ -z "$sha" ]; then
+        warn "llm.c 커밋을 읽지 못했습니다 (git 없음 또는 권한). SHA 확인 생략."
+    elif [ "$sha" != "$LLM_C_SHA" ]; then
+        warn "llm.c HEAD 불일치: $sha (기대: $LLM_C_SHA)"
+    fi
 }
 
 mkdir -p "$ROOT/logs" "$OUT_HIPIFY" "$RAW_BASE" "$RAW_VERIFY" "$BIN"

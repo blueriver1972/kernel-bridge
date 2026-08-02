@@ -12,6 +12,24 @@ source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 need hipify-perl "ROCm 컨테이너(rocm/dev-ubuntu) 안에서 실행하세요."
 check_vendor
 
+# ---------------------------------------------------------------------------
+# ★ 안전장치 ★
+# hipify 를 다시 돌리면 02-convert/hipify-out/ 을 통째로 덮어쓴다.
+# 거기에는 우리가 손으로 고친 11건이 들어 있고, 그 diff 가 곧 보고서의
+# "사람이 한 일" 지표다. 실수로 날리면 되돌리기 전까지 측정이 사라진다.
+# (녹화 중에 무심코 돌리는 상황을 실제로 대비한 것이다)
+if ls "$OUT_HIPIFY"/* >/dev/null 2>&1 && grep -lq "FIX-" "$OUT_HIPIFY"/* 2>/dev/null; then
+    if [ "${FORCE:-0}" != "1" ]; then
+        warn "02-convert/hipify-out/ 에 수정 표시(FIX-)가 있는 파일이 있습니다."
+        warn "지금 실행하면 그 수정이 전부 덮어써집니다."
+        warn ""
+        warn "  정말 다시 변환하려면 :  FORCE=1 bash scripts/20_hipify.sh"
+        warn "  되돌리려면          :  git checkout -- 02-convert/hipify-out/"
+        die  "안전을 위해 중단했습니다."
+    fi
+    warn "FORCE=1 — 기존 수정을 덮어씁니다."
+fi
+
 DIFFS="$ROOT/02-convert/diffs"
 mkdir -p "$DIFFS"
 STATS="$ROOT/02-convert/hipify-stats.txt"
