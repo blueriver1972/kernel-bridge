@@ -6,160 +6,153 @@
 
 | | 항목 | 상태 |
 |---|---|---|
-| ✅ | Phase 0 — 저장소·구조·하네스·범위 확정·스크립트 | 완료 |
-| ✅ | WSL2 설치 (2.7.11.0 / 커널 6.18.33.2) | 완료 |
-| ✅ | Ubuntu-22.04 설치 (VERSION 2, 사용자 생성 완료) | 완료 |
-| ✅ | WSL 디스크를 D:\wsl 로 이동 (C: 공간 부족 해결) | 완료 |
-| ✅ | Phase 2 환경 — docker + `kernel-bridge/rocm:6.3`, gfx942 컴파일 검증 통과 | 완료 |
-| ⬜ | **Phase 2 실행 (hipify + 컴파일 루프)** | ← **여기부터 (STEP 3)** |
-| ⬜ | Phase 1 — A100 기준선 | |
-| ⬜ | Phase 2 — hipify + 컴파일 수정 루프 | |
-| ⬜ | Phase 3 — MI300X 검증 | |
-| ⬜ | Phase 4 — 보고서 | |
+| ✅ | Phase 0 — 저장소·구조·하네스·변환 범위 확정·스크립트 | 완료 |
+| ✅ | WSL2 (2.7.11.0) + Ubuntu-22.04, 디스크를 `D:\wsl` 로 이동 | 완료 |
+| ✅ | Phase 2 환경 — docker + `kernel-bridge/rocm:6.3` | 완료 |
+| ✅ | **Phase 2 실행 — 3파일 전부 gfx942 컴파일 성공 (GPU 없이)** | 완료 · 이슈 11건 |
+| ⏳ | CUDA Toolkit 설치 (WSL 안) | 진행 중 |
+| ⬜ | **Phase 1 — GTX 970(sm_52) 기준선** | ← **여기부터** |
+| ⬜ | Phase 3 — MI300X 검증 (네오클라우드) | |
+| ⬜ | Phase 4 — 보고서 · 데모 자료 | |
 
-Phase 1과 Phase 2는 **서로 독립**이다. 어느 쪽을 먼저 해도 된다.
-Phase 3만 "Phase 2가 전부 통과한 뒤"라는 순서 제약이 있다 — 이게 예산을 지키는 규칙이다.
+Phase 1과 Phase 2는 **서로 독립**이다. Phase 3만 "Phase 2 통과 후"라는 제약이 있다 — 이게 예산을 지키는 규칙이다.
 
 ---
 
-## STEP 1 — Ubuntu 설치 (관리자 PowerShell)
+## ⚠ 어느 셸에서 치는가 — 헷갈리면 `command not found` 가 난다
 
-WSL2는 이미 준비됐으므로 배포판만 남았다.
-
-```powershell
-wsl --install -d Ubuntu-22.04
-```
-
-설치 후 Ubuntu 창에서 **UNIX 사용자명과 비밀번호를 직접 입력**한다.
-
-확인:
-```powershell
-wsl --list --verbose
-```
-`Ubuntu-22.04   Stopped   2` 처럼 **VERSION이 2**로 나와야 한다.
-
-> 이름이 맞지 않으면 `wsl --list --online` 으로 정확한 이름을 확인한다.
-> Store 경유가 막히면: `Invoke-WebRequest https://aka.ms/wslubuntu2204 -OutFile "$env:TEMP\u.appx" -UseBasicParsing; Add-AppxPackage "$env:TEMP\u.appx"`
-
----
-
-## ⚠ 어느 셸에서 치는가 — 이걸 헷갈리면 `command not found` 가 난다
-
-| 프롬프트 모양 | 어디 | 쓸 수 있는 것 |
+| 프롬프트 | 어디 | 쓸 수 있는 것 |
 |---|---|---|
-| `PS C:\>` | **Windows PowerShell** | `wsl`, `wsl --list`, `powershell` |
-| `k8096@DESKTOP-...:~$` | **Ubuntu (WSL 안)** | `bash`, `docker`, `apt`, `git` |
+| `PS C:\>` | **Windows PowerShell** | `wsl`, `powershell`, `dir` |
+| `k8096@DESKTOP-...:~$` | **Ubuntu (WSL 안)** | `bash`, `docker`, `apt`, `git`, `&&` |
 
-`wsl` 은 Windows 명령이라 **Ubuntu 안에서는 존재하지 않는다.**
-이미 Ubuntu 프롬프트에 들어와 있다면 `wsl -d ... -- bash x.sh` 대신 그냥 `bash x.sh` 를 친다.
+`wsl` 은 Windows 명령이라 **Ubuntu 안에는 없다.** PowerShell 에서 `wsl` 을 치면 Ubuntu 로 들어간다. 나올 때는 `exit`.
+
+아래에서 `$REPO` 는 이 저장소의 WSL 경로다. 이 PC 에서는:
+```bash
+REPO=/mnt/d/onedrive/문서/Claude/Projects/kernel-bridge
+```
 
 ---
 
-## STEP 2 — Phase 2 환경 (GPU 불필요, $0)
+## STEP A — Phase 1: NVIDIA 기준선
 
-### 🐧 Ubuntu 프롬프트에서 (`k8096@...$`)
-
+### A-1. CUDA Toolkit (WSL 안, 1회, sudo 필요)
 ```bash
-bash "/mnt/d/onedrive/문서/Claude/Projects/kernel-bridge/scripts/win/setup-rocm-container.sh"
+cd "$REPO" && bash scripts/win/setup-cuda-wsl.sh
 ```
+GPU 패스스루 확인 → CUDA 12.6 설치(~3GB) → **sm_52 로 실제 커널을 컴파일·실행해 검증**까지 한다.
 
-### 🪟 Windows PowerShell 에서 시작한다면
+> Windows 에 CUDA 를 설치하지 않는다. WSL2 가 Windows 드라이버를 통해 GPU 를 쓴다
+> (`/dev/dxg` + `/usr/lib/wsl/lib/libcuda.so`).
+> **`cuda` 나 `cuda-drivers` 패키지는 절대 설치하지 않는다** — 리눅스 드라이버가 들어와 패스스루가 깨진다.
 
-```powershell
-wsl -d Ubuntu-22.04 -- bash "/mnt/d/onedrive/문서/Claude/Projects/kernel-bridge/scripts/win/setup-rocm-container.sh"
+### A-2. 기준선 측정
+```bash
+cd "$REPO" && NV_ARCH=sm_52 bash scripts/10_baseline_nvidia.sh
 ```
+스크립트가 아키텍처를 보고 알아서 분기한다.
 
-둘은 같은 일을 한다: docker.io 설치 → 데몬 기동 → ROCm 개발 이미지 pull →
-`hipify-perl`/`hipcc` 존재 확인. sudo 비밀번호를 몇 번 물어본다.
-**받아진 이미지 태그를 `02-convert/scope.md`에 기록**할 것.
+| | sm_80 이상 (A100/H100) | sm_80 미만 (GTX 970) |
+|---|---|---|
+| bf16 | 사용 | **불가** → `ENABLE_BF16` 제거, 전부 fp32 |
+| TF32 | 자동 활성 → fp32 강제본과 두 벌 측정 | 하드웨어에 없음 → 한 벌 |
 
-끝나면 🪟 PowerShell 에서 한 번:
-```powershell
-wsl --shutdown
-```
-docker 그룹 반영에 필요하다.
+VRAM 부족 시 `LLMC_B=4` 로 문제 크기를 줄인다. **그 경우 MI300X 에도 같은 값을 써야 비교가 성립한다.**
 
-> 경로 확인됨 (2026-08-02): `/mnt/d/onedrive/문서/Claude/Projects/kernel-bridge` 가
-> WSL 에서 정상적으로 보인다. 한글 경로는 문제되지 않는다.
-> 다만 `/mnt/d` 는 DrvFs 라 느리고 OneDrive 동기화와 겹친다. 빌드가 답답하면
-> `cp -r /mnt/d/onedrive/문서/Claude/Projects/kernel-bridge ~/kernel-bridge` 로
-> 리눅스 쪽에 복사해 작업하고, 결과 파일만 되돌려 복사한다.
+끝나면 `01-baseline/raw/*.log` → `01-baseline/baseline.md` 로 옮긴다.
 
 ---
 
-## STEP 3 — Phase 2 실행 (GPU 불필요, $0)
+## STEP B — Phase 3: MI300X 검증 (네오클라우드)
 
-WSL 안에서:
+> ⚠ Phase 2 컴파일이 **전부 통과한 뒤에만** 온다. 여기서 처음 만나는 건 런타임 오류뿐이어야 한다.
 
+RunPod MI300X (백업: TensorWave) 에서:
 ```bash
-cd /mnt/d/onedrive/문서/Claude/Projects/kernel-bridge
+git clone <저장소> kernel-bridge && cd kernel-bridge
 bash scripts/00_fetch_sources.sh
-```
-
-그다음 ROCm 컨테이너 안에서 (IMAGE는 STEP 2가 알려준 태그):
-
-```bash
-docker run --rm -it -v "$PWD":/w -w /w $IMAGE \
-    bash -lc 'export PATH=$PATH:/opt/rocm/bin; bash scripts/20_hipify.sh && bash scripts/21_build_hip.sh'
-```
-
-- `20_hipify.sh` → `02-convert/hipify-out/`, diff, **잔여 32 가정 목록**
-- `21_build_hip.sh` → 컴파일. 에러가 나면 여기서 수정 루프를 돈다
-
-**이 구간이 프로젝트에서 가장 길다.** 에러 1건마다 `logs/time-log.md` 이슈 표에
-`[AUTO]/[LLM]/[MANUAL]` 태그와 시도 횟수를 적는다 — **이 로그가 보고서의 지표 전부다.**
-
-예상 난관은 [02-convert/scope.md](02-convert/scope.md) R1~R7에 미리 정리돼 있다.
-특히 **R1(`WARP_SIZE 32`)은 컴파일도 통과하고 크래시도 안 나면서 답만 틀린다.**
-
----
-
-## STEP 4 — Phase 1: A100 기준선 (GPU 필요, ~$5, 1~2h)
-
-STEP 3과 병행 가능. A100 인스턴스에서:
-
-```bash
-git clone <이 저장소> && cd kernel-bridge
-bash scripts/00_fetch_sources.sh
-bash scripts/10_baseline_nvidia.sh
-```
-
-`NV_ARCH` 기본값이 `sm_80`이라 인자가 필요 없다.
-fp32/TF32 두 벌을 자동으로 빌드·측정한다.
-
-끝나면:
-- `01-baseline/raw/*.log` → `01-baseline/baseline.md` 표로 옮긴다
-- `enable_tf32:` 출력이 fp32 빌드에서 `0`인지 확인한다
-- **인스턴스를 즉시 끈다**
-
----
-
-## STEP 5 — Phase 3: MI300X 검증 (GPU 필요, ~$10, 2~3h)
-
-> ⚠ **STEP 3의 컴파일이 전부 통과한 뒤에만 온다.** 여기서 처음 만나는 건 런타임 오류뿐이어야 한다.
-
-RunPod MI300X + `rocm/pytorch` 이미지에서:
-
-```bash
+docker build -t kernel-bridge/rocm:6.3 docker/
+docker run --rm -e FP32_ONLY=1 -v "$PWD":/w -w /w kernel-bridge/rocm:6.3 \
+    bash scripts/21_build_hip.sh
 bash scripts/30_verify_mi300x.sh
 ```
 
-실행 → 정확도 요약 → rocprof 병목 1건까지 자동.
-끝나면 `03-verify/verify.md`를 채우고 **인스턴스를 즉시 끈다.**
+**`FP32_ONLY=1` 을 빠뜨리지 말 것.** 기준선이 fp32 로 측정됐다면 MI300X 도 fp32 여야 한다.
 
-정확도 불일치가 나오면 R1(`WARP_SIZE`)부터 의심한다.
+정확도 불일치가 나오면 **R1(`WARP_SIZE 32`)부터 의심한다.** 끝나면 **인스턴스를 즉시 끈다.**
 
 ---
 
-## STEP 6 — Phase 4: 보고서 ($0)
+## STEP C — Phase 4: 보고서 · 데모
 
 - `report/summary-template.md` 채우기 (실측값 없는 칸은 비워 둔다)
-- 데모 대본 + **3단계(컴파일 에러 수정 루프) 사전 녹화** — 라이브 실패 위험이 크다
+- 데모 장치 3종 — 자세한 설계는 [report/demo-plan.md](report/demo-plan.md)
+- 컴파일 에러 수정 루프는 **사전 녹화 필수** (라이브 실패 위험)
 
 ---
 
-## 막히면
+# 다른 머신에서 재현하기
 
-로컬 WSL/docker가 계속 말썽이면 **저가 CPU 클라우드 VM(~$0.1/h)** 에서 STEP 2·3을
-그대로 돌릴 수 있다. RunPod을 어차피 쓸 거면 계정이 하나로 끝난다.
-MI300X 대비 100배 저렴하므로 Phase 2를 GPU 밖으로 빼는 목적은 그대로 달성된다.
+노트북이나 클라우드에서 다시 세팅할 때 **오늘 밟은 함정을 다시 밟지 않으려면** 아래를 그대로 따른다.
+
+## 1. 저장소 가져오기
+
+```bash
+git clone <원격 저장소> kernel-bridge && cd kernel-bridge
+bash scripts/00_fetch_sources.sh        # llm.c 를 고정 SHA 로 받는다
+```
+
+`vendor/` 와 `bin/` 은 커밋하지 않는다 — 재현은 커밋 SHA 로만 보장한다.
+
+## 2-a. 노트북 (Windows + WSL2) — Phase 2 를 GPU 없이
+
+```powershell
+# 관리자 PowerShell (기능이 꺼져 있는 경우에만)
+powershell -ExecutionPolicy Bypass -File scripts\win\setup-wsl.ps1
+```
+```bash
+# Ubuntu 안에서
+bash scripts/win/setup-rocm-container.sh
+```
+
+노트북에 NVIDIA GPU 가 있다면 기준선도 로컬에서:
+```bash
+bash scripts/win/setup-cuda-wsl.sh
+NV_ARCH=sm_XX bash scripts/10_baseline_nvidia.sh
+```
+
+## 2-b. 네오클라우드 (RunPod / TensorWave) — 리눅스 직접
+
+WSL 이 아니므로 `scripts/win/` 은 쓰지 않는다. 나머지는 동일하다.
+
+```bash
+docker build -t kernel-bridge/rocm:6.3 docker/
+docker run --rm -e FP32_ONLY=1 -v "$PWD":/w -w /w kernel-bridge/rocm:6.3 \
+    bash -c 'bash scripts/22_verify_toolchain.sh && bash scripts/20_hipify.sh && bash scripts/21_build_hip.sh'
+bash scripts/30_verify_mi300x.sh     # GPU 있는 포드에서만
+```
+
+NVIDIA 네오클라우드에서 기준선을 다시 잡을 때는 `NV_ARCH` 만 바꾼다 (A100=`sm_80`, H100=`sm_90`).
+
+## 3. 반드시 기억할 함정 (전부 실측으로 겪은 것)
+
+| # | 증상 | 원인 | 대응 |
+|---|---|---|---|
+| 1 | `hipcc` 가 `amdgcn-link` 에서 SEGV | **ROCm 6.2 이미지의 링커가 깨져 있다.** `ld.lld --version` 조차 죽는다. 호스트 컴파일과 device IR 생성은 정상이라 코드 문제로 오해하기 쉽다 | **6.3 이상 사용** (`docker/Dockerfile` 에 고정됨) |
+| 2 | `docker: read-only file system` | 호스트 디스크가 가득 차 ext4 가 emergency read-only 로 전환 | 이미지 4GB+ 여유 확보. WSL 이면 `wsl --manage <distro> --move D:\wsl` |
+| 3 | `File/Spec/Functions.pm did not return a true value` | ROCm 이미지가 hipcc·hipify-perl 을 perl 스크립트로 넣고 full perl 을 누락 | Dockerfile 이 `perl` 설치 (해결됨) |
+| 4 | `hipblas.h` not found | dev 이미지에 BLAS 미설치 + hipify 가 ROCm 5.x 평면 경로를 생성 | Dockerfile 이 `hipblas-dev` 설치, 소스는 `<hipblas/hipblas.h>` 로 수정됨 |
+| 5 | `CUBLAS_LOWP` undeclared | **llm.c 의 fp32 경로가 원래 불완전하다.** `#else` 분기가 매크로를 정의하지 않는데 11곳에서 쓴다 | 빌드 스크립트가 `-D` 로 주입 (양쪽 모두 해결됨) |
+| 6 | `wsl --update` 가 0.0% 에서 정지 | Windows 10 inbox wsl.exe 의 Windows Update 경로 | `wsl --update --web-download` |
+| 7 | PowerShell 에서 한글이 깨짐 | PS 5.1 은 BOM 없는 UTF-8 을 코드페이지로 읽는다 | `.ps1` 은 **UTF-8 with BOM** 으로 저장 (적용됨) |
+| 8 | `wsl -d ... -- bash` 에서 `VAR=$(...)` 가 빈 값 | Windows→WSL 인자 전달 과정의 문제 | 명령 치환 대입을 피하고 `$PWD` 나 글롭을 쓴다 |
+
+## 4. 조건 일치 체크리스트 (비교표를 쓰기 전에 확인)
+
+- [ ] 양쪽 정밀도가 같은가 (`FP32_ONLY` / `ENABLE_BF16` / TF32)
+- [ ] 문제 크기 `B` 가 같은가 (`LLMC_B`)
+- [ ] llm.c 커밋 SHA 가 같은가 (`f1e2ace6`)
+- [ ] 컴파일 최적화 플래그가 같은가 (`-O3`, fast-math)
+
+**하나라도 어긋나면 성능 숫자는 쓰지 않는다.**

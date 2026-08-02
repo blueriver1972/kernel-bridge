@@ -1,4 +1,4 @@
-# kernel-bridge — WSL2 준비 (★ 관리자 PowerShell 에서 실행 ★)
+﻿# kernel-bridge — WSL2 준비 (★ 관리자 PowerShell 에서 실행 ★)
 #
 # 목적: Phase 2(hipify + hipcc 컴파일)를 GPU 없이 로컬에서 돌리기 위한 리눅스 환경.
 #
@@ -15,6 +15,12 @@
 $ErrorActionPreference = 'Stop'
 $env:WSL_UTF8 = 1
 $KernelPath = "$env:SystemRoot\system32\lxss\tools\kernel"
+
+# 저장소 위치를 스크립트 자신의 경로에서 알아낸다 — 드라이브 문자나 폴더명이
+# 달라도(노트북 등) 그대로 동작해야 한다. D:\a\b → /mnt/d/a/b 로 변환.
+$repoRoot = (Resolve-Path "$PSScriptRoot\..\..").Path
+$wslRepo  = '/mnt/' + $repoRoot.Substring(0,1).ToLower() + `
+            ($repoRoot.Substring(2) -replace '\\','/')
 
 function Step($m) { Write-Host "`n=== $m ===" -ForegroundColor Cyan }
 function Ok($m)   { Write-Host "  OK  $m"   -ForegroundColor Green }
@@ -124,6 +130,6 @@ Write-Host @"
 
 2) 그다음 ROCm 컨테이너 환경 준비:
 
-     wsl -d $distro -- bash /mnt/d/onedrive/문서/Claude/Projects/kernel-bridge/scripts/win/setup-rocm-container.sh
+     wsl -d $distro -- bash "$wslRepo/scripts/win/setup-rocm-container.sh"
 ────────────────────────────────────────────────────────────
 "@ -ForegroundColor Cyan
