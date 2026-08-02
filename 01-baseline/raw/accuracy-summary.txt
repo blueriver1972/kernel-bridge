@@ -1,0 +1,1 @@
+      1 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.721e-06 max_abs_err=1.355e-07 time_ms=0.9941 gflops=270.0

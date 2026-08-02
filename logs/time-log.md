@@ -15,6 +15,9 @@
 | 2026-08-02 | ROCm 6.2 링커 SEGV 진단 → 6.3 으로 교체 | | 환경 | 아래 E1 참조. **가장 오래 걸린 환경 문제** |
 | 2026-08-02 | Phase 2 — hipify 실행 | | 변환 | 5파일 전부 변환. 잔여 32 가정 30곳 검출 |
 | 2026-08-02 | Phase 2 — 컴파일 수정 루프 (5회차에 전부 통과) | | 디버깅 | 아래 이슈 표 11건 |
+| 2026-08-02 | WSL 안에 CUDA 12.6 설치 (GPU 패스스루) | | 환경 | Windows 설치 불필요 |
+| 2026-08-02 | TDR 보정 — 문제 크기 B 탐색 | | 검증 | B=8·4 실패, B=2 통과 |
+| 2026-08-02 | **Phase 1 기준선 측정 (GTX 970)** | 17 | 검증 | 15/15 PASS. 스크립트 자동 실행 |
 | | | | | |
 
 > 소요(분) 칸은 실제 걸린 시간으로 채운다. 비워둔 채로 보고서에 숫자를 쓰지 않는다.
@@ -98,3 +101,5 @@
 | E2 | `docker: read-only file system` | WSL 가상디스크가 C: 에 있고 C: 여유 0.5GB. 이미지 pull 중 가득 차 ext4 가 emergency read-only 로 전환 | `wsl --manage --move D:\wsl` |
 | E3 | `wsl --update` 가 0.0% 에서 17분 정지 | Windows 10 inbox wsl.exe 의 Windows Update 경로 문제 | `--web-download` |
 | E4 | `File/Spec/Functions.pm did not return a true value` | ROCm 이미지가 hipcc·hipify-perl 을 perl 스크립트로 넣고 full perl 패키지를 누락 | Dockerfile 에서 `perl` 설치 |
+| E5 | `the launch timed out and was terminated` | **Windows TDR** — 디스플레이 드라이버가 2초 넘는 커널을 죽인다. 소비자용 GPU + Windows/WSL 조합에서만 발생 | 문제 크기 축소 (B=2) |
+| E6 | `CUBLAS_LOWP` undeclared (fp32 빌드) | **llm.c 의 fp32 경로가 원래 불완전하다.** `#else` 분기가 매크로를 정의하지 않는데 11곳에서 쓴다. bf16 을 끄는 순간 드러난다 | 빌드 스크립트가 `-D` 로 주입 (NVIDIA·AMD 양쪽) |

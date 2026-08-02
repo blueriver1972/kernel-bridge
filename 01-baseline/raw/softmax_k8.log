@@ -1,4 +1,4 @@
-Using kernel 1
+Using kernel 8
 Largest output is: 0.999877
 Checking block size 32.
 0.000000 0.000000
@@ -38,10 +38,10 @@ Checking block size 1024.
 0.000000 0.000000
 All results match. Starting benchmarks.
 
-block_size   32 | time 200.7065 ms | per token 98.00 µs
-block_size   64 | time 209.1884 ms | per token 102.14 µs
-block_size  128 | time 221.4610 ms | per token 108.14 µs
-block_size  256 | time 210.6823 ms | per token 102.87 µs
-block_size  512 | time 333.5662 ms | per token 162.87 µs
-block_size 1024 | time 683.9465 ms | per token 333.96 µs
-[36m[09:45:06][0m run:softmax:k1 — 195s (rc=0)
+block_size   32 | time 9.8594 ms | per token 4.81 µs
+block_size   64 | time 10.0922 ms | per token 4.93 µs
+block_size  128 | time 10.0903 ms | per token 4.93 µs
+block_size  256 | time 10.0593 ms | per token 4.91 µs
+block_size  512 | time 10.0630 ms | per token 4.91 µs
+block_size 1024 | time 10.0429 ms | per token 4.90 µs
+[36m[09:48:44][0m run:softmax:k8 — 14s (rc=0)
