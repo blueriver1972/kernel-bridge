@@ -1,60 +1,60 @@
-In file included from /w/02-convert/hipify-out/attention_forward.hip.cpp:60:
-/w/02-convert/hipify-out/common.h:243:35: warning: implicit conversion from 'int' to 'float' changes value from 2147483647 to 2147483648 [-Wimplicit-const-int-float-conversion]
+In file included from /tmp/tmp.JlWRyDxFNk/attention_forward.hip.cpp:61:
+/tmp/tmp.JlWRyDxFNk/common.h:243:35: warning: implicit conversion from 'int' to 'float' changes value from 2147483647 to 2147483648 [-Wimplicit-const-int-float-conversion]
   243 |         arr[i] = ((float)rand() / RAND_MAX); // range 0..1
       |                                 ~ ^~~~~~~~
 /usr/include/stdlib.h:87:18: note: expanded from macro 'RAND_MAX'
    87 | #define RAND_MAX        2147483647
       |                         ^~~~~~~~~~
-In file included from /w/02-convert/hipify-out/attention_forward.hip.cpp:60:
-/w/02-convert/hipify-out/common.h:251:35: warning: implicit conversion from 'int' to 'float' changes value from 2147483647 to 2147483648 [-Wimplicit-const-int-float-conversion]
+In file included from /tmp/tmp.JlWRyDxFNk/attention_forward.hip.cpp:61:
+/tmp/tmp.JlWRyDxFNk/common.h:251:35: warning: implicit conversion from 'int' to 'float' changes value from 2147483647 to 2147483648 [-Wimplicit-const-int-float-conversion]
   251 |         arr[i] = ((float)rand() / RAND_MAX) * 2.0 - 1.0; // range -1..1
       |                                 ~ ^~~~~~~~
 /usr/include/stdlib.h:87:18: note: expanded from macro 'RAND_MAX'
    87 | #define RAND_MAX        2147483647
       |                         ^~~~~~~~~~
-In file included from /w/02-convert/hipify-out/attention_forward.hip.cpp:60:
-/w/02-convert/hipify-out/common.h:305:5: warning: ignoring return value of function declared with 'nodiscard' attribute [-Wunused-result]
+In file included from /tmp/tmp.JlWRyDxFNk/attention_forward.hip.cpp:61:
+/tmp/tmp.JlWRyDxFNk/common.h:305:5: warning: ignoring return value of function declared with 'nodiscard' attribute [-Wunused-result]
   305 |     hipGetDeviceProperties(&deviceProp, deviceIdx);
       |     ^~~~~~~~~~~~~~~~~~~~~~ ~~~~~~~~~~~~~~~~~~~~~~
 /opt/rocm-6.3.0/lib/llvm/bin/../../../include/hip/hip_runtime_api.h:91:32: note: expanded from macro 'hipGetDeviceProperties'
    91 | #define hipGetDeviceProperties hipGetDevicePropertiesR0600
       |                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-/w/02-convert/hipify-out/attention_forward.hip.cpp:739:5: warning: ignoring return value of function declared with 'nodiscard' attribute [-Wunused-result]
-  739 |     hipDeviceGetAttribute(&max_sram_size, hipDeviceAttributeMaxSharedMemoryPerBlock, 0);
+/tmp/tmp.JlWRyDxFNk/attention_forward.hip.cpp:740:5: warning: ignoring return value of function declared with 'nodiscard' attribute [-Wunused-result]
+  740 |     hipDeviceGetAttribute(&max_sram_size, hipDeviceAttributeMaxSharedMemoryPerBlock, 0);
       |     ^~~~~~~~~~~~~~~~~~~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/w/02-convert/hipify-out/attention_forward.hip.cpp:1287:5: warning: ignoring return value of function declared with 'nodiscard' attribute [-Wunused-result]
- 1287 |     hipGetDeviceProperties(&deviceProp, deviceIdx);
+/tmp/tmp.JlWRyDxFNk/attention_forward.hip.cpp:1288:5: warning: ignoring return value of function declared with 'nodiscard' attribute [-Wunused-result]
+ 1288 |     hipGetDeviceProperties(&deviceProp, deviceIdx);
       |     ^~~~~~~~~~~~~~~~~~~~~~ ~~~~~~~~~~~~~~~~~~~~~~
 /opt/rocm-6.3.0/lib/llvm/bin/../../../include/hip/hip_runtime_api.h:91:32: note: expanded from macro 'hipGetDeviceProperties'
    91 | #define hipGetDeviceProperties hipGetDevicePropertiesR0600
       |                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 5 warnings generated when compiling for gfx942.
-In file included from /w/02-convert/hipify-out/attention_forward.hip.cpp:60:
-/w/02-convert/hipify-out/common.h:243:35: warning: implicit conversion from 'int' to 'float' changes value from 2147483647 to 2147483648 [-Wimplicit-const-int-float-conversion]
+In file included from /tmp/tmp.JlWRyDxFNk/attention_forward.hip.cpp:61:
+/tmp/tmp.JlWRyDxFNk/common.h:243:35: warning: implicit conversion from 'int' to 'float' changes value from 2147483647 to 2147483648 [-Wimplicit-const-int-float-conversion]
   243 |         arr[i] = ((float)rand() / RAND_MAX); // range 0..1
       |                                 ~ ^~~~~~~~
 /usr/include/stdlib.h:87:18: note: expanded from macro 'RAND_MAX'
    87 | #define RAND_MAX        2147483647
       |                         ^~~~~~~~~~
-In file included from /w/02-convert/hipify-out/attention_forward.hip.cpp:60:
-/w/02-convert/hipify-out/common.h:251:35: warning: implicit conversion from 'int' to 'float' changes value from 2147483647 to 2147483648 [-Wimplicit-const-int-float-conversion]
+In file included from /tmp/tmp.JlWRyDxFNk/attention_forward.hip.cpp:61:
+/tmp/tmp.JlWRyDxFNk/common.h:251:35: warning: implicit conversion from 'int' to 'float' changes value from 2147483647 to 2147483648 [-Wimplicit-const-int-float-conversion]
   251 |         arr[i] = ((float)rand() / RAND_MAX) * 2.0 - 1.0; // range -1..1
       |                                 ~ ^~~~~~~~
 /usr/include/stdlib.h:87:18: note: expanded from macro 'RAND_MAX'
    87 | #define RAND_MAX        2147483647
       |                         ^~~~~~~~~~
-In file included from /w/02-convert/hipify-out/attention_forward.hip.cpp:60:
-/w/02-convert/hipify-out/common.h:305:5: warning: ignoring return value of function declared with 'nodiscard' attribute [-Wunused-result]
+In file included from /tmp/tmp.JlWRyDxFNk/attention_forward.hip.cpp:61:
+/tmp/tmp.JlWRyDxFNk/common.h:305:5: warning: ignoring return value of function declared with 'nodiscard' attribute [-Wunused-result]
   305 |     hipGetDeviceProperties(&deviceProp, deviceIdx);
       |     ^~~~~~~~~~~~~~~~~~~~~~ ~~~~~~~~~~~~~~~~~~~~~~
 /opt/rocm-6.3.0/lib/llvm/bin/../../../include/hip/hip_runtime_api.h:91:32: note: expanded from macro 'hipGetDeviceProperties'
    91 | #define hipGetDeviceProperties hipGetDevicePropertiesR0600
       |                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-/w/02-convert/hipify-out/attention_forward.hip.cpp:739:5: warning: ignoring return value of function declared with 'nodiscard' attribute [-Wunused-result]
-  739 |     hipDeviceGetAttribute(&max_sram_size, hipDeviceAttributeMaxSharedMemoryPerBlock, 0);
+/tmp/tmp.JlWRyDxFNk/attention_forward.hip.cpp:740:5: warning: ignoring return value of function declared with 'nodiscard' attribute [-Wunused-result]
+  740 |     hipDeviceGetAttribute(&max_sram_size, hipDeviceAttributeMaxSharedMemoryPerBlock, 0);
       |     ^~~~~~~~~~~~~~~~~~~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/w/02-convert/hipify-out/attention_forward.hip.cpp:1287:5: warning: ignoring return value of function declared with 'nodiscard' attribute [-Wunused-result]
- 1287 |     hipGetDeviceProperties(&deviceProp, deviceIdx);
+/tmp/tmp.JlWRyDxFNk/attention_forward.hip.cpp:1288:5: warning: ignoring return value of function declared with 'nodiscard' attribute [-Wunused-result]
+ 1288 |     hipGetDeviceProperties(&deviceProp, deviceIdx);
       |     ^~~~~~~~~~~~~~~~~~~~~~ ~~~~~~~~~~~~~~~~~~~~~~
 /opt/rocm-6.3.0/lib/llvm/bin/../../../include/hip/hip_runtime_api.h:91:32: note: expanded from macro 'hipGetDeviceProperties'
    91 | #define hipGetDeviceProperties hipGetDevicePropertiesR0600

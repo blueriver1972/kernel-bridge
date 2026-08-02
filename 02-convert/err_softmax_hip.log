@@ -1,45 +1,45 @@
-In file included from /w/02-convert/hipify-out/softmax_forward.hip.cpp:38:
-/w/02-convert/hipify-out/common.h:243:35: warning: implicit conversion from 'int' to 'float' changes value from 2147483647 to 2147483648 [-Wimplicit-const-int-float-conversion]
+In file included from /tmp/tmp.JlWRyDxFNk/softmax_forward.hip.cpp:38:
+/tmp/tmp.JlWRyDxFNk/common.h:243:35: warning: implicit conversion from 'int' to 'float' changes value from 2147483647 to 2147483648 [-Wimplicit-const-int-float-conversion]
   243 |         arr[i] = ((float)rand() / RAND_MAX); // range 0..1
       |                                 ~ ^~~~~~~~
 /usr/include/stdlib.h:87:18: note: expanded from macro 'RAND_MAX'
    87 | #define RAND_MAX        2147483647
       |                         ^~~~~~~~~~
-In file included from /w/02-convert/hipify-out/softmax_forward.hip.cpp:38:
-/w/02-convert/hipify-out/common.h:251:35: warning: implicit conversion from 'int' to 'float' changes value from 2147483647 to 2147483648 [-Wimplicit-const-int-float-conversion]
+In file included from /tmp/tmp.JlWRyDxFNk/softmax_forward.hip.cpp:38:
+/tmp/tmp.JlWRyDxFNk/common.h:251:35: warning: implicit conversion from 'int' to 'float' changes value from 2147483647 to 2147483648 [-Wimplicit-const-int-float-conversion]
   251 |         arr[i] = ((float)rand() / RAND_MAX) * 2.0 - 1.0; // range -1..1
       |                                 ~ ^~~~~~~~
 /usr/include/stdlib.h:87:18: note: expanded from macro 'RAND_MAX'
    87 | #define RAND_MAX        2147483647
       |                         ^~~~~~~~~~
-In file included from /w/02-convert/hipify-out/softmax_forward.hip.cpp:38:
-/w/02-convert/hipify-out/common.h:305:5: warning: ignoring return value of function declared with 'nodiscard' attribute [-Wunused-result]
+In file included from /tmp/tmp.JlWRyDxFNk/softmax_forward.hip.cpp:38:
+/tmp/tmp.JlWRyDxFNk/common.h:305:5: warning: ignoring return value of function declared with 'nodiscard' attribute [-Wunused-result]
   305 |     hipGetDeviceProperties(&deviceProp, deviceIdx);
       |     ^~~~~~~~~~~~~~~~~~~~~~ ~~~~~~~~~~~~~~~~~~~~~~
 /opt/rocm-6.3.0/lib/llvm/bin/../../../include/hip/hip_runtime_api.h:91:32: note: expanded from macro 'hipGetDeviceProperties'
    91 | #define hipGetDeviceProperties hipGetDevicePropertiesR0600
       |                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-/w/02-convert/hipify-out/softmax_forward.hip.cpp:392:17: warning: loop not unrolled: the optimizer was unable to perform the requested transformation; the transformation might be disabled or specified as part of an unsupported transformation ordering [-Wpass-failed=transform-warning]
+/tmp/tmp.JlWRyDxFNk/softmax_forward.hip.cpp:392:17: warning: loop not unrolled: the optimizer was unable to perform the requested transformation; the transformation might be disabled or specified as part of an unsupported transformation ordering [-Wpass-failed=transform-warning]
   392 | __global__ void softmax_forward_kernel7(float* out, const float* inp, int N, int C) {
       |                 ^
-/w/02-convert/hipify-out/softmax_forward.hip.cpp:392:17: warning: loop not unrolled: the optimizer was unable to perform the requested transformation; the transformation might be disabled or specified as part of an unsupported transformation ordering [-Wpass-failed=transform-warning]
+/tmp/tmp.JlWRyDxFNk/softmax_forward.hip.cpp:392:17: warning: loop not unrolled: the optimizer was unable to perform the requested transformation; the transformation might be disabled or specified as part of an unsupported transformation ordering [-Wpass-failed=transform-warning]
 5 warnings generated when compiling for gfx942.
-In file included from /w/02-convert/hipify-out/softmax_forward.hip.cpp:38:
-/w/02-convert/hipify-out/common.h:243:35: warning: implicit conversion from 'int' to 'float' changes value from 2147483647 to 2147483648 [-Wimplicit-const-int-float-conversion]
+In file included from /tmp/tmp.JlWRyDxFNk/softmax_forward.hip.cpp:38:
+/tmp/tmp.JlWRyDxFNk/common.h:243:35: warning: implicit conversion from 'int' to 'float' changes value from 2147483647 to 2147483648 [-Wimplicit-const-int-float-conversion]
   243 |         arr[i] = ((float)rand() / RAND_MAX); // range 0..1
       |                                 ~ ^~~~~~~~
 /usr/include/stdlib.h:87:18: note: expanded from macro 'RAND_MAX'
    87 | #define RAND_MAX        2147483647
       |                         ^~~~~~~~~~
-In file included from /w/02-convert/hipify-out/softmax_forward.hip.cpp:38:
-/w/02-convert/hipify-out/common.h:251:35: warning: implicit conversion from 'int' to 'float' changes value from 2147483647 to 2147483648 [-Wimplicit-const-int-float-conversion]
+In file included from /tmp/tmp.JlWRyDxFNk/softmax_forward.hip.cpp:38:
+/tmp/tmp.JlWRyDxFNk/common.h:251:35: warning: implicit conversion from 'int' to 'float' changes value from 2147483647 to 2147483648 [-Wimplicit-const-int-float-conversion]
   251 |         arr[i] = ((float)rand() / RAND_MAX) * 2.0 - 1.0; // range -1..1
       |                                 ~ ^~~~~~~~
 /usr/include/stdlib.h:87:18: note: expanded from macro 'RAND_MAX'
    87 | #define RAND_MAX        2147483647
       |                         ^~~~~~~~~~
-In file included from /w/02-convert/hipify-out/softmax_forward.hip.cpp:38:
-/w/02-convert/hipify-out/common.h:305:5: warning: ignoring return value of function declared with 'nodiscard' attribute [-Wunused-result]
+In file included from /tmp/tmp.JlWRyDxFNk/softmax_forward.hip.cpp:38:
+/tmp/tmp.JlWRyDxFNk/common.h:305:5: warning: ignoring return value of function declared with 'nodiscard' attribute [-Wunused-result]
   305 |     hipGetDeviceProperties(&deviceProp, deviceIdx);
       |     ^~~~~~~~~~~~~~~~~~~~~~ ~~~~~~~~~~~~~~~~~~~~~~
 /opt/rocm-6.3.0/lib/llvm/bin/../../../include/hip/hip_runtime_api.h:91:32: note: expanded from macro 'hipGetDeviceProperties'
