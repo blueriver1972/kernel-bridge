@@ -57,7 +57,20 @@ command -v rocm-smi >/dev/null 2>&1 \
     && rocm-smi --showproductname 2>&1 | tee -a "$SESSION_LOG" \
     || warn "rocm-smi 없음 — GPU 없는 환경입니까?"
 
-if command -v hipcc >/dev/null 2>&1; then
+ROCM_VER="$(cat /opt/rocm/.info/version 2>/dev/null | cut -d- -f1)"
+[ -n "$ROCM_VER" ] && log "포드의 ROCm: $ROCM_VER" | tee -a "$SESSION_LOG"
+
+# ★ ROCm 6.2 는 쓰지 않는다 — ld.lld / llvm-link / opt 가 --version 조차
+#   SEGV 로 죽어 device 링크 단계에서 실패한다 (scope.md, docker/Dockerfile 참조).
+#   포드에 6.2 가 깔려 있으면 네이티브를 버리고 우리 6.3 이미지로 간다.
+ROCM_OK=1
+case "$ROCM_VER" in
+    6.2*) warn "★ 포드의 ROCm 이 6.2 입니다 — 링커가 깨진 버전입니다."
+          warn "  네이티브 대신 docker 로 6.3 이미지를 씁니다."
+          ROCM_OK=0 ;;
+esac
+
+if command -v hipcc >/dev/null 2>&1 && [ "$ROCM_OK" = 1 ]; then
     RUNNER="native"
     log "ROCm 네이티브 감지 — docker 없이 진행합니다"
     hipcc --version | head -3 | tee -a "$SESSION_LOG"
