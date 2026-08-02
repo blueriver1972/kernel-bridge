@@ -36,6 +36,7 @@ RUN apt-get update \
         perl \
         file \
         ca-certificates \
+        git \
         hipblas-dev \
         hipblaslt-dev \
         rocblas-dev \
