@@ -18,9 +18,28 @@
 # ============================================================================
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
-# 기준선과 조건을 맞춘다. baseline.md 참조 — 어긋나면 비교표가 무효다.
+# ---------------------------------------------------------------------------
+# 기준선과 조건을 맞춘다. 어긋나면 비교표가 무효다.
+#
+#   [A] H100 과 짝지을 때 (본 측정) — 권장
+#       원본 그대로. 양쪽 다 bf16 을 지원하고 TDR 제약도 없다.
+#         FP32_ONLY=0 LLMC_B=   bash scripts/50_pod_session.sh   # bf16
+#         FP32_ONLY=1 LLMC_B=   bash scripts/50_pod_session.sh   # fp32
+#
+#   [B] GTX 970 기준선과 짝지을 때 (정확도 리허설)
+#       970 은 bf16 미지원(sm_52) + Windows TDR 로 B=2 가 한계였다.
+#         FP32_ONLY=1 LLMC_B=2  bash scripts/50_pod_session.sh
+#
+# 기본값은 [B] 다 — 지금 확보된 기준선이 970 뿐이기 때문이다.
+# H100 을 측정한 뒤에는 [A] 로 다시 돌린다.
+# ---------------------------------------------------------------------------
 export FP32_ONLY="${FP32_ONLY:-1}"
 export LLMC_B="${LLMC_B:-2}"
+if [ -n "$LLMC_B" ]; then
+    log "문제 크기 축소: B=$LLMC_B — NVIDIA 쪽도 같은 값이어야 한다"
+else
+    log "문제 크기: 원본 B=8"
+fi
 
 SESSION_LOG="$ROOT/03-verify/raw/session.log"
 mkdir -p "$ROOT/03-verify/raw" "$ROOT/report/demo-images"
