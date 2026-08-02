@@ -108,6 +108,50 @@ MI300X 의 fp32 ms 와 나란히 놓으면 하드웨어 차이가 아니라 **�
 
 ---
 
+## 3-B. 이식본이 NVIDIA 에서 깨진다 (2026-08-02 실측)
+
+hipify 산출물을 고칠 때 **AMD 전용 구문을 쓰면 원본 플랫폼에서 컴파일되지 않는다.**
+우리가 실제로 그렇게 썼고, nvcc 로 확인했다.
+
+| 구문 | sm_52 | sm_70 | **sm_80 (A100)** | sm_90 |
+|---|---|---|---|---|
+| `__shfl_down(v, 16, 32)` — `[FIX-5]` 에서 사용 | ✅ (deprecated) | ❌ | ❌ | ❌ |
+| `__builtin_amdgcn_wave_barrier()` — `hip_intrinsics_compat.h` | ❌ | ❌ | ❌ | ❌ |
+
+비-sync 셔플은 CUDA 9 에서 Volta 이상 대상으로 제거됐다.
+**기준선 GPU 가 sm_52 라서 통과했을 뿐**이며, A100 으로 검증했다면 바로 걸렸다.
+구형 GPU 가 관대해서 문제를 가린 경우다.
+
+### 이 프로젝트에서는 문제가 아니다
+산출물이 두 갈래로 분리돼 있다 — `00-src/*.cu`(CUDA, 불변)와
+`02-convert/hipify-out/*.hip.cpp`(HIP). 변환본을 nvcc 로 컴파일할 일이 없다.
+
+### 그러나 제품에서는 요구사항이다
+고객은 소스를 한 벌만 유지하고 싶어 한다. 두 갈래로 갈리면 원본을 고칠 때마다
+이식본에 반영해야 하고, HIP 의 장점인 "양쪽에서 다 돈다"가 사라진다.
+
+**수정안은 "AMD 에서 되게"가 아니라 "양쪽에서 되게" 써야 한다:**
+```c
+// AMD 전용 (우리가 쓴 것)
+val = __shfl_down(val, offset, 32);
+
+// 이식 가능 — cooperative_groups 타일 API (양쪽에 있음)
+auto tile = cg::tiled_partition<32>(cg::this_thread_block());
+val = tile.shfl_down(val, offset);
+
+// 이식 가능 — 플랫폼 분기
+#if defined(__HIP_PLATFORM_AMD__)
+    val = __shfl_down(val, offset, 32);
+#else
+    val = __shfl_down_sync(0xFFFFFFFF, val, offset);
+#endif
+```
+
+그리고 이를 강제하려면 **양쪽 컴파일을 모두 루프에 넣어야 한다.**
+AMD 만 확인하면 오늘과 같은 일이 생긴다.
+
+---
+
 ## 4. 다음 단계에서 결정해야 할 것
 
 - [x] NVIDIA 비교 GPU 확정 → **A100 (sm_80)**. 2026-08-01 결정.
