@@ -49,6 +49,16 @@ fi
 NVFLAGS="-O3 --use_fast_math -arch=$NV_ARCH -Wno-deprecated-gpu-targets"
 BLAS="-lcublas -lcublasLt"
 
+# ★ llm.c 의 fp32 경로는 그 자체로 불완전하다 (2026-08-02 확인).
+#   common.h 의 #else(fp32) 분기는 typedef 만 하고 CUBLAS_LOWP /
+#   CUBLAS_LOWP_COMPUTE 를 정의하지 않는데 attention_forward 가 11곳에서 쓴다.
+#   ENABLE_BF16 을 끄면 'undeclared identifier' 로 컴파일이 깨진다.
+#   fp32 분기에 정의가 없으므로 -D 로 넣어도 충돌하지 않는다.
+if [ $MODERN -eq 0 ]; then
+    NVFLAGS="$NVFLAGS -DCUBLAS_LOWP=CUDA_R_32F -DCUBLAS_LOWP_COMPUTE=CUBLAS_COMPUTE_32F"
+    log "fp32 경로 보강: CUBLAS_LOWP / CUBLAS_LOWP_COMPUTE 정의 주입"
+fi
+
 build_nv() {  # $1=출력명 $2=소스디렉토리 $3=파일 $4...=추가플래그
     local name="$1" dir="$2" f="$3"; shift 3
     log "빌드: $name"
