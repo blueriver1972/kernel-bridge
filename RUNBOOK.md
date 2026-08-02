@@ -89,7 +89,7 @@ LLMC_B=2 bash scripts/30_verify_mi300x.sh
 
 ## STEP C — Phase 4: 보고서 · 데모
 
-- `report/summary-template.md` 채우기 (실측값 없는 칸은 비워 둔다)
+- [report/summary.md](report/summary.md) — 측정값이 들어간 실제 요약 (빈칸은 미측정)
 - 데모 장치 3종 — 자세한 설계는 [report/demo-plan.md](report/demo-plan.md)
 - 컴파일 에러 수정 루프는 **사전 녹화 필수** (라이브 실패 위험)
 
