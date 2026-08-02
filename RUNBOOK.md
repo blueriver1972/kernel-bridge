@@ -10,8 +10,8 @@
 | ✅ | WSL2 (2.7.11.0) + Ubuntu-22.04, 디스크를 `D:\wsl` 로 이동 | 완료 |
 | ✅ | Phase 2 환경 — docker + `kernel-bridge/rocm:6.3` | 완료 |
 | ✅ | **Phase 2 실행 — 3파일 전부 gfx942 컴파일 성공 (GPU 없이)** | 완료 · 이슈 11건 |
-| ⏳ | CUDA Toolkit 설치 (WSL 안) | 진행 중 |
-| ⬜ | **Phase 1 — GTX 970(sm_52) 기준선** | ← **여기부터** |
+| ✅ | CUDA Toolkit 12.6 (WSL 안) — sm_52 컴파일·실행 검증 통과 | 완료 |
+| ⏳ | **Phase 1 — GTX 970(sm_52) 기준선, `LLMC_B=2`** | 측정 중 |
 | ⬜ | Phase 3 — MI300X 검증 (네오클라우드) | |
 | ⬜ | Phase 4 — 보고서 · 데모 자료 | |
 
@@ -24,13 +24,14 @@ Phase 1과 Phase 2는 **서로 독립**이다. Phase 3만 "Phase 2 통과 후"�
 | 프롬프트 | 어디 | 쓸 수 있는 것 |
 |---|---|---|
 | `PS C:\>` | **Windows PowerShell** | `wsl`, `powershell`, `dir` |
-| `k8096@DESKTOP-...:~$` | **Ubuntu (WSL 안)** | `bash`, `docker`, `apt`, `git`, `&&` |
+| `<user>@<host>:~$` | **Ubuntu (WSL 안)** | `bash`, `docker`, `apt`, `git`, `&&` |
 
 `wsl` 은 Windows 명령이라 **Ubuntu 안에는 없다.** PowerShell 에서 `wsl` 을 치면 Ubuntu 로 들어간다. 나올 때는 `exit`.
 
-아래에서 `$REPO` 는 이 저장소의 WSL 경로다. 이 PC 에서는:
+아래에서 `$REPO` 는 이 저장소의 WSL 경로다. 저장소를 클론한 위치에 맞춰 한 번 정해 두면 된다:
 ```bash
-REPO=/mnt/d/onedrive/문서/Claude/Projects/kernel-bridge
+REPO=$(pwd)          # 저장소 루트에서 실행
+# 또는 예: REPO=/mnt/d/work/kernel-bridge
 ```
 
 ---
@@ -49,7 +50,7 @@ GPU 패스스루 확인 → CUDA 12.6 설치(~3GB) → **sm_52 로 실제 커널
 
 ### A-2. 기준선 측정
 ```bash
-cd "$REPO" && NV_ARCH=sm_52 bash scripts/10_baseline_nvidia.sh
+cd "$REPO" && LLMC_B=2 NV_ARCH=sm_52 bash scripts/10_baseline_nvidia.sh
 ```
 스크립트가 아키텍처를 보고 알아서 분기한다.
 
@@ -58,7 +59,9 @@ cd "$REPO" && NV_ARCH=sm_52 bash scripts/10_baseline_nvidia.sh
 | bf16 | 사용 | **불가** → `ENABLE_BF16` 제거, 전부 fp32 |
 | TF32 | 자동 활성 → fp32 강제본과 두 벌 측정 | 하드웨어에 없음 → 한 벌 |
 
-VRAM 부족 시 `LLMC_B=4` 로 문제 크기를 줄인다. **그 경우 MI300X 에도 같은 값을 써야 비교가 성립한다.**
+VRAM 부족이나 TDR 로 커널이 죽으면 `LLMC_B` 로 문제 크기를 줄인다.
+**이 PC 실측: B=8, B=4 는 TDR 에 걸리고 B=2 가 한계선이다.**
+**MI300X 에도 반드시 같은 값을 써야 비교가 성립한다.**
 
 끝나면 `01-baseline/raw/*.log` → `01-baseline/baseline.md` 로 옮긴다.
 
@@ -75,10 +78,10 @@ bash scripts/00_fetch_sources.sh
 docker build -t kernel-bridge/rocm:6.3 docker/
 docker run --rm -e FP32_ONLY=1 -v "$PWD":/w -w /w kernel-bridge/rocm:6.3 \
     bash scripts/21_build_hip.sh
-bash scripts/30_verify_mi300x.sh
+LLMC_B=2 bash scripts/30_verify_mi300x.sh
 ```
 
-**`FP32_ONLY=1` 을 빠뜨리지 말 것.** 기준선이 fp32 로 측정됐다면 MI300X 도 fp32 여야 한다.
+**`FP32_ONLY=1` 과 `LLMC_B` 를 빠뜨리지 말 것.** 기준선이 fp32 로 측정됐다면 MI300X 도 fp32 여야 한다.
 
 정확도 불일치가 나오면 **R1(`WARP_SIZE 32`)부터 의심한다.** 끝나면 **인스턴스를 즉시 끈다.**
 
@@ -147,6 +150,7 @@ NVIDIA 네오클라우드에서 기준선을 다시 잡을 때는 `NV_ARCH` 만 
 | 6 | `wsl --update` 가 0.0% 에서 정지 | Windows 10 inbox wsl.exe 의 Windows Update 경로 | `wsl --update --web-download` |
 | 7 | PowerShell 에서 한글이 깨짐 | PS 5.1 은 BOM 없는 UTF-8 을 코드페이지로 읽는다 | `.ps1` 은 **UTF-8 with BOM** 으로 저장 (적용됨) |
 | 8 | `wsl -d ... -- bash` 에서 `VAR=$(...)` 가 빈 값 | Windows→WSL 인자 전달 과정의 문제 | 명령 치환 대입을 피하고 `$PWD` 나 글롭을 쓴다 |
+| 9 | `the launch timed out and was terminated` | **Windows TDR** — 디스플레이 드라이버가 2초 넘는 커널을 죽인다. 소비자용 GPU 를 Windows/WSL 에서 쓸 때만 발생하며 데이터센터 GPU 에는 없다 | 문제 크기 축소(`LLMC_B`). 이 PC 는 B=2 가 한계 |
 
 ## 4. 조건 일치 체크리스트 (비교표를 쓰기 전에 확인)
 
