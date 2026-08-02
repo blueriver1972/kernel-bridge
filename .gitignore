@@ -24,3 +24,6 @@ results.db
 Thumbs.db
 desktop.ini
 ~$*
+
+# 데모 원시 덤프 (재생성 가능 — 이미지만 커밋한다)
+report/demo-images/*.bin

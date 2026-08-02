@@ -53,3 +53,6 @@
 2026-08-02T09:57:57+09:00	run:attention_fp32:k5	2s	rc=0
 2026-08-02T09:58:01+09:00	run:attention_fp32:k6	4s	rc=0
 2026-08-02T09:58:02+09:00	run:flash	1s	rc=0
+2026-08-02T10:38:39+09:00	dump:nvidia_970	1s	rc=0
+2026-08-02T10:38:43+09:00	dump:nvidia_970_again	0s	rc=0
+2026-08-02T10:40:38+09:00	dump:broken_demo	0s	rc=0

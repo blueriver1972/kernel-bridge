@@ -1,68 +1,133 @@
 # kernel-bridge
 
-CUDA → ROCm 커널 레벨 변환 데모 (레벨 0.5)
+**CUDA → ROCm 커널 레벨 변환 데모** — HIPIFY 가 어디까지 자동으로 해주고,
+어디서부터 사람이 필요한지를 **실측**한다.
 
-## 목적
-"CUDA 코드를 HIPIFY + LLM으로 AMD MI300X에서 실제로 변환·검증하는 과정"을
-커널 단위로 끝까지 완주하고, 자동화 가능 구간과 사람이 필요한 구간을 실측한다.
+> 주장이 아니라 로그다. 이 저장소의 숫자는 전부 실행 결과에서 나왔고,
+> 실측값이 없는 칸은 비워 두었다.
 
-## 변환 대상 (3파일 고정 — 범위 확장 금지)
+---
+
+## 지금까지의 결과
+
+### Phase 2 — 변환 (완료)
+
+NVIDIA 전용 커널 3파일(2,294줄)을 AMD MI300X(gfx942)용으로 **GPU 없이 컴파일 성공**.
+
+| 항목 | 값 |
+|---|---|
+| hipify 자동 변환 | **164줄** |
+| 컴파일 에러 | **11건** (5회차에 전부 해결) |
+| ├ LLM 보조로 해결 | 7건 |
+| ├ **사람 판단 필요** | **3건** ← 여기가 자동화의 한계 |
+| └ 환경 문제 | 1건 |
+| 사람이 쓴 코드 | 변환물 51줄 수정 + 호환 계층 134줄 |
+
+측정 방법: hipify 원본 출력을 먼저 커밋해 두고, 이후 `02-convert/hipify-out/` 의
+git diff 를 "사람이 한 일"로 셌다. → [logs/time-log.md](logs/time-log.md)
+
+### Phase 1 — NVIDIA 기준선 (완료)
+
+| 대상 | 커널 | 정확도 |
+|---|---|---|
+| softmax_forward | 8 | **8/8 PASS** |
+| attention_forward | 6 | **6/6 PASS** |
+| flash_attention (자체) | 1 | **PASS** (상대오차 1.7e-06) |
+
+→ [01-baseline/baseline.md](01-baseline/baseline.md)
+
+### Phase 3 — MI300X 검증 (예정)
+
+---
+
+## 자동 변환으로 도달할 수 없었던 3건
+
+이 목록이 이 프로젝트의 핵심이다. **문법 치환으로는 해결되지 않는다.**
+
+**1. `cg::reduce` 가 HIP 에 아예 없다**
+ROCm 6.3 의 `hip_cooperative_groups.h` 에 `reduce` 심볼이 0건이다. shuffle 로 재구성해야 하는데,
+`__shfl` 은 스칼라만 받으므로 구조체는 word 단위로 쪼개야 하고, `cg::reduce` 는 **모든 레인**에
+결과를 남기므로 마지막 브로드캐스트가 필요하다. **빠뜨리면 컴파일도 되고 크래시도 안 나면서 답만 틀린다.**
+
+**2. `__shfl_*_sync` 의 폭을 사람이 정해야 한다**
+hipify 는 이 8곳을 **전혀 변환하지 않는다.** CUDA 는 워프 폭이 32 로 암묵 고정이지만 AMD 는 웨이브가 64다.
+그리고 **같은 파일 안에서 관례가 갈린다** — `warpReduceMax` 는 `offset=16`(32 가정),
+`kernel8` 은 `offset=warpSize/2`(런타임 64). 일괄 치환하면 반드시 틀린다.
+
+**3. `#if` 안에 숨은 정의는 도구가 못 본다**
+`#if defined(ENABLE_BF16) && (__CUDACC_VER_MAJOR__ < 12) && ...` 로 감싼 bf16 용 `__ldcs`/`__stcs` 가
+HIP 에서 조건이 항상 거짓이 되어 **통째로 사라진다.** hipify 는 전처리기 조건 내부를 해석하지 않고,
+에러는 한참 뒤 **사용 지점**에서 엉뚱한 모습으로 나타난다.
+
+---
+
+## "같은 답이 나온다"를 눈으로 확인하기
+
+같은 입력을 두 GPU 에 넣고 출력을 그림으로 그린다.
+왼쪽·가운데가 각 GPU 의 출력, **오른쪽이 차이**다.
+
+**정상 — 차이 패널이 완전한 검정**
+
+![정상](report/demo-images/ok/compare.png)
+
+**커널에 버그를 주입한 경우 — 차이 패널에 불이 들어온다**
+
+![버그](report/demo-images/broken/compare.png)
+
+차이 패널의 색 기준은 **허용오차**다 (검정=일치 · 파랑=허용 이내 · 빨강=허용 초과).
+위 두 장은 실제로 GTX 970 에서 컴파일해 돌린 결과이며, 아래 버그 버전은
+online softmax 의 재조정 계수를 제거한 **진짜로 잘못된 커널**이다 (조작된 데이터가 아니다).
+
+```bash
+bash scripts/41_dump_reference.sh nvidia          # NVIDIA 에서 덤프
+BREAK=1 bash scripts/41_dump_reference.sh broken  # 버그 주입 버전
+python3 scripts/40_demo_images.py a.bin b.bin     # 열지도 3장 생성
+```
+
+---
+
+## 변환 대상 (3파일 고정)
+
 변환 순서는 **어려운 것부터**다. 쉬운 파일을 먼저 하면 자동화율이 과대평가된다.
-근거와 확정 범위는 [02-convert/scope.md](02-convert/scope.md) 참조.
 
 1. llm.c `dev/cuda/softmax_forward.cu` (732줄) — warp32 가정이 가장 많음
 2. llm.c `dev/cuda/attention_forward.cu` (1390줄) — cuBLAS/cuBLASLt + `cg::reduce`
-3. `00-src/flash_attention_simplified.cu` (172줄) — 자체 교육용 커널, 데모 시연용
+3. `00-src/flash_attention_simplified.cu` (172줄) — 자체 교육용 커널
 
-llm.c 두 파일은 `validate_result`(tol 1e-4) + `benchmark_kernel` 하네스가 내장돼 있다.
-flash 커널에는 없어서 [00-src/flash_attention_test.cu](00-src/flash_attention_test.cu)를 따로 만들었다.
-
-## 폴더 구조
-- `00-src/`      자체 작성 소스 (원본 커널 · 하네스). **원본은 수정하지 않는다**
-- `vendor/`      llm.c 얕은 클론 (커밋하지 않음 — SHA로만 재현)
-- `scripts/`     단계별 실행 스크립트. **GPU 필요/불필요 경계가 여기서 정해진다**
-- `01-baseline/` NVIDIA 원본 실행 결과 (정확도 기준선 · ms)
-- `02-convert/`  범위 확정 · hipify 출력 · diff · 에러 로그
-- `03-verify/`   MI300X 실행 결과 (정확도 PASS · 타이밍)
-- `logs/`        시간 기록 · 이슈 로그 (지표의 원료)
-- `report/`      요약 1장 + 시연 대본
+근거와 확정 범위: [02-convert/scope.md](02-convert/scope.md)
 
 ## 실행 순서 — 과금 경계가 핵심
 
-| Phase | 스크립트 | GPU | 시간 | 비용 |
-|---|---|---|---|---|
-| 0 | `00_fetch_sources.sh` | 없음 | 1분 | $0 |
-| 1 | `10_baseline_nvidia.sh` | A100 (sm_80) | 1~2h | ~$5 |
-| 2a | `20_hipify.sh` | **없음** | 5분 | $0 |
-| 2b | `21_build_hip.sh` | **없음** | 수 시간 | $0 |
-| 3 | `30_verify_mi300x.sh` | MI300X | 2~3h | ~$10 |
-| 4 | 보고서 작성 | 없음 | — | $0 |
+| Phase | 스크립트 | GPU | 비용 |
+|---|---|---|---|
+| 0 | `00_fetch_sources.sh` | 없음 | $0 |
+| 1 | `10_baseline_nvidia.sh` | NVIDIA | ~$5 |
+| 2a | `20_hipify.sh` | **없음** | $0 |
+| 2b | `21_build_hip.sh` | **없음** | $0 |
+| 3 | `30_verify_mi300x.sh` | MI300X | ~$10 |
 
-**hipify와 hipcc 컴파일에는 GPU가 필요 없다.** 가장 오래 걸리는 컴파일 수정 루프를
-CPU 컨테이너에서 끝내고, MI300X는 "실행" 단계에서만 켠다.
-21이 전부 통과하기 전에 30을 실행하지 않는다 → MI300X 6~10h를 2~3h로 줄인다.
+**hipify 와 hipcc 컴파일에는 GPU 가 필요 없다.** 가장 오래 걸리는 컴파일 수정 루프를
+CPU 컨테이너에서 끝내고 MI300X 는 "실행" 단계에서만 켠다 → MI300X 6~10h 를 2~3h 로 줄인다.
 
-환경 준비는 [scripts/README.md](scripts/README.md) 참조.
+셋업·재현 절차와 **실측으로 겪은 함정 9건**: [RUNBOOK.md](RUNBOOK.md)
 
-## 데모 시나리오 (10분)
-1. 원본 CUDA 커널 보여주기 (30초)
-2. hipify-perl 실행 → diff (1분)
-3. 컴파일 에러 → Claude 수정 루프 (3분, **사전 녹화 백업 필수**)
-4. MI300X 실행 → 정확도 PASS + 실행 시간 (2분)
-5. 지표 1장: 자동/보조/수작업 비율 · NVIDIA 대비 성능 % (3분)
+## 폴더 구조
 
-## 환경
-- 클라우드: RunPod MI300X 1장 (백업: TensorWave) — 코딩 중 인스턴스 OFF
-- 이미지: Phase 2 는 `docker/Dockerfile` (베이스 `rocm/dev-ubuntu-22.04:**6.3**`),
-  Phase 3 는 `rocm/pytorch` 공식 도커 (베어메탈 ROCm 설치 금지)
-  ※ **6.2 는 쓰지 않는다** — 링커(`ld.lld`)가 SEGV 로 죽는다. 근거는 `docker/Dockerfile` 주석
-- NVIDIA 비교: **A100 (sm_80)** 1~2시간 — 확정. H100 대비 저렴하고 데이터센터급이라
-  MI300X 와 대비했을 때 보고서 신뢰도가 유지된다
-- 예산: 총 **$15~20**
+```
+00-src/       자체 소스 (교육용 커널 · 검증 하네스 · 덤프 도구)
+docker/       Phase 2 빌드 환경 (ROCm 6.3 기반)
+scripts/      단계별 실행 스크립트
+01-baseline/  NVIDIA 실측 결과
+02-convert/   변환 범위 · hipify 출력 · 수정 diff · 에러 로그
+03-verify/    MI300X 검증 결과
+logs/         시간·이슈 기록 (지표의 원료)
+report/       요약 · 데모 설계 · 데모 이미지
+```
 
 ## 원칙
-- 모든 에러·소요 시간을 logs/ 에 기록한다 — 로그가 곧 산출물이다
-- 커뮤니티 ROCm 포크는 먼저 보지 않는다. 막혔을 때만 참조하고, 참조 사실을 기록한다
-- 실측값 없는 숫자는 보고서에 쓰지 않는다
-- **정밀도를 맞추지 않은 성능 비교는 하지 않는다** — llm.c는 A100/H100에서 TF32를
-  자동으로 켠다. 비교표 기준값은 fp32 대 fp32다 (scope.md §3)
+
+- 모든 에러·소요 시간을 `logs/` 에 기록한다 — **로그가 곧 산출물이다**
+- 커뮤니티 ROCm 포크는 먼저 보지 않는다. 막혔을 때만 참조하고 그 사실을 기록한다
+- **실측값 없는 숫자는 보고서에 쓰지 않는다**
+- **정밀도·문제 크기를 맞추지 않은 성능 비교는 하지 않는다**
+- 세대가 다른 GPU 의 성능 격차를 이식 품질로 발표하지 않는다
