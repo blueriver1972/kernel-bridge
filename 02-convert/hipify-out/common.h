@@ -263,7 +263,11 @@ int* make_random_int(size_t N, int V) {
 
 float* make_zeros_float(size_t N) {
     float* arr = (float*)malloc(N * sizeof(float));
-    memset(arr, 0, N * sizeof(float)); // all zero
+    // [FIX-11] ROCm 7.x 는 전역 이름공간에 __device__ memset 을 선언한다.
+    //   호스트 함수에서 memset 을 부르면 그 __device__ 버전이 후보로 잡혀
+    //   "call to __device__ function from __host__ function" 로 깨진다.
+    //   빌트인을 쓰면 오버로드 해석을 우회한다 (6.3 에서도 동일하게 동작).
+    __builtin_memset(arr, 0, N * sizeof(float)); // all zero
     return arr;
 }
 

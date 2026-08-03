@@ -24,8 +24,32 @@
 // CUDA 의 __syncwarp() 는 Volta 이후 독립 스레드 스케줄링 때문에 필요하다.
 // AMD 웨이브프런트는 lock-step 이라 의미상 필요 없지만, 컴파일러가 메모리
 // 연산 순서를 바꾸지 않도록 wave barrier 를 남겨 둔다.
+//
+// [FIX-9] ROCm 7.x 는 __syncwarp 를 직접 제공한다
+//   (amd_detail/amd_warp_sync_functions.h). 그대로 정의하면 redefinition 이다.
+//   ROCm 6.3 에는 없어서 우리가 채워야 했다 — 그래서 헤더 존재로 갈라 쓴다.
+//   버전 숫자 대신 헤더 유무로 판단하는 게 중간 버전에도 안전하다.
+#if defined(__has_include)
+#  if __has_include(<hip/amd_detail/amd_warp_sync_functions.h>)
+#    define KB_HIP_HAS_SYNCWARP 1
+#  endif
+#endif
+
+#ifndef KB_HIP_HAS_SYNCWARP
 __device__ __forceinline__ void __syncwarp() { __builtin_amdgcn_wave_barrier(); }
 __device__ __forceinline__ void __syncwarp(unsigned) { __builtin_amdgcn_wave_barrier(); }
+#endif
+
+// ---- hipBLAS API 개명 대응 --------------------------------------------------
+// [FIX-10] hipify 는 cublasGemmStridedBatchedEx 를 hipblasGemmStridedBatchedEx_v2
+//   로 바꾼다. ROCm 6.x 에는 그 이름이 있지만 **7.x 에서 제거**되고
+//   접미사 없는 이름으로 통합됐다 (시그니처는 동일 — hipDataType,
+//   hipblasComputeType_t 를 받는 형태).
+//   같은 변환 결과가 ROCm 버전에 따라 컴파일되지 않는다는 실증이다.
+#include <hip/hip_version.h>
+#if HIP_VERSION_MAJOR >= 7
+#  define hipblasGemmStridedBatchedEx_v2 hipblasGemmStridedBatchedEx
+#endif
 
 // ---- 캐시 스트리밍 store (CUDA __stcs) --------------------------------------
 // "이 데이터는 재사용 안 하니 캐시를 오염시키지 말라"는 힌트.
