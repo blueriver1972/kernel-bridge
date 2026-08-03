@@ -19,6 +19,22 @@ FAILED=0
 HIPFLAGS="-O3 -ffast-math --offload-arch=$AMD_ARCH -I$OUT_HIPIFY"
 
 # ---------------------------------------------------------------------------
+# ROCm 7.x 대응 (2026-08-03, AMD Developer Cloud MI300X 실측)
+#
+# 이미지의 ROCm 레이아웃이 어긋나 있다:
+#   hipcc 가 참조하는 곳   /opt/rocm-7.0.2/core-7.14/include   ← hip/ 가 없다
+#   실제 헤더             /opt/rocm-7.0.2/include/hip/hip_runtime.h
+# hipconfig 도 core-7.14/include 를 가리켜서 hipcc 단독으로는
+#   error: 'hip/hip_runtime.h' file not found
+# 가 난다. hipBLAS/hipBLASLt 헤더도 같은 위치(/opt/rocm/include)에 있다.
+#
+# ROCm 6.3 에서도 /opt/rocm/include 는 유효하므로 무조건 추가해도 무해하다.
+# ---------------------------------------------------------------------------
+ROCM_INC=""
+[ -d /opt/rocm/include ] && ROCM_INC="-I/opt/rocm/include"
+HIPFLAGS="$HIPFLAGS $ROCM_INC"
+
+# ---------------------------------------------------------------------------
 # FP32_ONLY=1 : bf16 경로를 빼고 전부 fp32 로 빌드한다.
 #
 # 왜 필요한가 — 비교 조건을 맞추기 위해서다.
@@ -44,7 +60,7 @@ if [ "${FP32_ONLY:-0}" = "1" ]; then
     #   → ENABLE_BF16 을 끄는 순간 'undeclared identifier' 로 깨진다.
     #   fp32 분기에는 정의가 아예 없으므로 -D 로 넣어도 재정의 충돌이 없다.
     #   (#if CUBLAS_LOWP == HIP_R_16BF 는 #ifdef ENABLE_CUDNN 안이라 평가되지 않는다)
-    HIPFLAGS="-O3 -ffast-math --offload-arch=$AMD_ARCH -I$SRC_DIR"
+    HIPFLAGS="-O3 -ffast-math --offload-arch=$AMD_ARCH -I$SRC_DIR $ROCM_INC"
     HIPFLAGS="$HIPFLAGS -DCUBLAS_LOWP=HIP_R_32F -DCUBLAS_LOWP_COMPUTE=HIPBLAS_COMPUTE_32F"
     log "FP32_ONLY — bf16 경로 제외하고 빌드 (기준선과 조건 일치)"
 fi
