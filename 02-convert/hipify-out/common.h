@@ -318,7 +318,14 @@ void setup_main() {
     cudaCheck(hipMalloc(&cublaslt_workspace, cublaslt_workspace_size));
 
     // TF32 precision is equivalent to torch.set_float32_matmul_precision('high')
-    int enable_tf32 = cuda_arch_major >= 8 ? 1 : 0;
+    // [FIX-13] ★ CUDA 컴퓨트 능력 검사가 AMD 로 새어들어온다.
+    //   cuda_arch_major 는 NVIDIA 의 compute capability 개념인데,
+    //   MI300X 는 major=9 로 읽혀 이 조건(>=8)을 우연히 통과한다.
+    //   그 결과 AMD 에 없는 TF32 math mode 를 켜려 하고
+    //   hipblasSetMathMode 가 HIPBLAS_STATUS_NOT_SUPPORTED(7) 를 반환해
+    //   attention 커널 6개가 전부 시작조차 못 했다.
+    //   AMD 에 TF32 는 존재하지 않으므로 항상 0 이 맞다.
+    int enable_tf32 = 0;
     // TODO implement common CLI for all tests/benchmarks
     // if (override_enable_tf32 == 0) { enable_tf32 = 0; } // force to zero via arg
     cublas_compute_type = enable_tf32 ? HIPBLAS_COMPUTE_32F_FAST_TF32 : HIPBLAS_COMPUTE_32F;

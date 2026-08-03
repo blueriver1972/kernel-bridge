@@ -713,6 +713,17 @@ int main(int argc, char **argv) {
     // first check the correctness of the kernel
     for (int j = 0; j < sizeof(block_sizes) / sizeof(int); j++) {
         int block_size = block_sizes[j];
+        // [FIX-14] ★ 커널 8 은 "워프 하나가 행 하나" 구조라
+        //   warpsPerBlock = blockDim.x / warpSize 가 1 이상이어야 한다.
+        //   AMD 웨이브는 64 이므로 block_size=32 면 이 값이 0 이 되고
+        //   row = blockIdx.x * 0 + warpId 가 전부 0 → 대부분의 행이 안 써진다.
+        //   크래시 없이 답만 틀린다 (GPU 출력 0.000000 이 대량 관측됨).
+        //   NVIDIA 는 warpSize=32 라 32/32=1 로 우연히 맞았다.
+        //   원본의 block_sizes 는 워프32 하드웨어를 전제로 고른 목록이다.
+        if (kernel_num == 8 && block_size < 64) {
+            printf("Skipping block size %d for kernel 8 (needs >= wavefront size).\n", block_size);
+            continue;
+        }
         printf("Checking block size %d.\n", block_size);
         softmax_forward(kernel_num, d_out, d_inp, B * T, V, block_size);
         validate_result(d_out, out, "out", B * T * V, 1e-4f);
@@ -723,6 +734,17 @@ int main(int argc, char **argv) {
     // time the kernel at different block sizes
     for (int j = 0; j < sizeof(block_sizes) / sizeof(int); j++) {
         int block_size = block_sizes[j];
+        // [FIX-14] ★ 커널 8 은 "워프 하나가 행 하나" 구조라
+        //   warpsPerBlock = blockDim.x / warpSize 가 1 이상이어야 한다.
+        //   AMD 웨이브는 64 이므로 block_size=32 면 이 값이 0 이 되고
+        //   row = blockIdx.x * 0 + warpId 가 전부 0 → 대부분의 행이 안 써진다.
+        //   크래시 없이 답만 틀린다 (GPU 출력 0.000000 이 대량 관측됨).
+        //   NVIDIA 는 warpSize=32 라 32/32=1 로 우연히 맞았다.
+        //   원본의 block_sizes 는 워프32 하드웨어를 전제로 고른 목록이다.
+        if (kernel_num == 8 && block_size < 64) {
+            printf("Skipping block size %d for kernel 8 (needs >= wavefront size).\n", block_size);
+            continue;
+        }
 
         int repeat_times = 100;
         float elapsed_time = benchmark_kernel(repeat_times, softmax_forward,
