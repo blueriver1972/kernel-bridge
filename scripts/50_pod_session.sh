@@ -34,7 +34,9 @@ source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 # H100 을 측정한 뒤에는 [A] 로 다시 돌린다.
 # ---------------------------------------------------------------------------
 export FP32_ONLY="${FP32_ONLY:-1}"
-export LLMC_B="${LLMC_B:-2}"
+# ${VAR-기본값} 이어야 한다. ${VAR:-기본값} 은 "빈 값"도 미설정으로 보고
+# 기본값을 넣어버려서 LLMC_B= 로 원본 크기(B=8)를 쓸 수가 없다 (실제로 겪었다).
+export LLMC_B="${LLMC_B-2}"
 if [ -n "$LLMC_B" ]; then
     log "문제 크기 축소: B=$LLMC_B — NVIDIA 쪽도 같은 값이어야 한다"
 else
