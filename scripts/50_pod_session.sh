@@ -150,8 +150,15 @@ run_gpu "scripts/41_dump_reference.sh" amd_mi300x 1024 2>&1 | tee -a "$SESSION_L
 step "6. 요약"
 {
     echo "=== 정확도 ==="
-    grep -hiE "PASS|FAIL|Mismatch|NOT OK" "$RAW_VERIFY"/*.log 2>/dev/null \
-        | sort | uniq -c | sort -rn | head -20
+    # ★ session.log 를 제외해야 한다.
+    #   이 파일은 세션마다 이어붙이기(append)되므로 수정 전 실패 기록이 남아 있고,
+    #   자기 자신을 긁으면 이미 고친 Mismatch 가 요약에 되살아난다.
+    #   (실제로 발생했다 — 커널별 로그는 전부 통과인데 요약에만 Mismatch 가 떴다)
+    for f in "$RAW_VERIFY"/*.log; do
+        [ "$(basename "$f")" = "session.log" ] && continue
+        printf '%-24s %s\n' "$(basename "$f" .log)" \
+            "$(grep -qi 'All results match\|status=PASS' "$f" && echo PASS || echo '★ 확인필요')"
+    done
     echo
     echo "=== 실행 시간 ==="
     grep "^2" "$ROOT/logs/auto-time.tsv" | grep "run:" | tail -20

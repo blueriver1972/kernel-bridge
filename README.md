@@ -176,8 +176,17 @@ scripts/      단계별 실행 스크립트
 02-convert/   변환 범위 · hipify 출력 · 수정 diff · 에러 로그
 03-verify/    MI300X 검증 결과
 logs/         시간·이슈 기록 (지표의 원료)
-report/       요약 · 데모 설계 · 녹화 대본 · 데모 이미지
+report/       요약 · 데모 설계 · 녹화 대본 · 발표자 가이드 · 데모 이미지
 ```
+
+## 발표·데모 문서
+
+| 문서 | 누가 읽나 |
+|---|---|
+| [report/presenter-guide.md](report/presenter-guide.md) | **발표자** — 이거 하나만 읽으면 발표할 수 있다 |
+| [report/recording-script.md](report/recording-script.md) | 촬영하는 사람 — 찍는 순서와 명령 |
+| [report/demo-plan.md](report/demo-plan.md) | 설계 근거 |
+| [report/summary.md](report/summary.md) | 숫자의 출처 |
 
 ## 원칙
 
