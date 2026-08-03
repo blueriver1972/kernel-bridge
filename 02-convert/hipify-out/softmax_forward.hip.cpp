@@ -616,7 +616,22 @@ void softmax_forward7(float* out, const float* inp, int N, int C, int block_size
 }
 
 void softmax_forward_online8(float* out, const float* inp, int N, int C, int block_size) {
-    const int grid_size = ceil_div(N * 32, block_size);
+    // [FIX-15] ★ 호스트 grid 계산에 32 가 박혀 있다 — "행 하나당 32스레드"
+    //   (워프32 하나가 행 하나) 전제다. AMD 웨이브는 64 라 행 하나에 64스레드가
+    //   필요한데 grid 를 N*32 로 잡으면 블록 수가 절반이 되고 나머지 행이
+    //   아예 계산되지 않는다 (GPU 출력 0.000000 대량 관측).
+    //   커널 안의 warpsPerBlock 과는 별개인, 두 번째 웨이브 폭 가정이다.
+    //
+    //   주의: 바로 위 softmax_forward_online2(커널6) 도 N*32 를 쓰지만 그건 옳다.
+    //   그 커널은 cg::tiled_partition<32> 로 32레인 타일을 명시하기 때문이다.
+    //   같은 파일에서 한쪽은 32 가 맞고 한쪽은 틀리다 — 일괄 치환이 불가능한 이유.
+    static int wave_size = 0;
+    if (wave_size == 0) {
+        hipDeviceProp_t p;
+        cudaCheck(hipGetDeviceProperties(&p, 0));
+        wave_size = p.warpSize;
+    }
+    const int grid_size = ceil_div(N * wave_size, block_size);
     softmax_forward_online_kernel8<<<grid_size, block_size>>>(out, inp, N, C);
     cudaCheck(hipGetLastError());
 }

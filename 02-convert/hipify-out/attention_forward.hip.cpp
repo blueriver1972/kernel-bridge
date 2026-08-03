@@ -1288,7 +1288,12 @@ int main(int argc, char **argv) {
 
     // setup cuBLAS (and cuDNN if needed)
     hipblasCreate(&cublas_handle);
-    int enable_tf32 = deviceProp.major >= 8 ? 1 : 0;
+    // [FIX-13b] common.h 의 setup_main 과 별개로 여기에도 같은 검사가 있다.
+    //   deviceProp.major 는 NVIDIA compute capability 개념인데 MI300X 는 9 로
+    //   읽혀 조건을 통과하고, AMD 에 없는 TF32 를 켜려 해
+    //   hipblasSetMathMode 가 NOT_SUPPORTED(7) 를 반환한다.
+    //   (실측: DEFAULT_MATH -> 0 정상 / TF32_TENSOR_OP_MATH -> 7)
+    int enable_tf32 = 0;
     printf("enable_tf32: %d\n", enable_tf32);
     hipblasMath_t cublas_math_mode = enable_tf32 ? HIPBLAS_TF32_TENSOR_OP_MATH : HIPBLAS_DEFAULT_MATH;
     cublasCheck(hipblasSetMathMode(cublas_handle, cublas_math_mode));
