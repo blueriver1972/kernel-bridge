@@ -39,7 +39,12 @@ if command -v hipcc >/dev/null 2>&1 && [ -d "$OUT_HIPIFY" ] && [ -f "$OUT_HIPIFY
     T="$(mktemp -d)"; trap 'rm -rf "$T"' EXIT
     hipify-perl "$SRC/flash_attention_dump.cu" > "$T/dump.hip.cpp" || die "hipify 실패"
     log "hipcc 로 빌드 (arch=$AMD_ARCH)"
-    hipcc -O3 -ffast-math --offload-arch="$AMD_ARCH" \
+    # ROCm 7.x 는 hip 헤더가 hipcc 기본 탐색 경로에 없다
+    # (자세한 내용은 scripts/21_build_hip.sh 주석 참조)
+    ROCM_INC=""
+    [ -d /opt/rocm/include ] && ROCM_INC="-I/opt/rocm/include"
+    # shellcheck disable=SC2086
+    hipcc -O3 -ffast-math --offload-arch="$AMD_ARCH" $ROCM_INC \
         "$OUT_HIPIFY/flash_attention_simplified.hip.cpp" "$T/dump.hip.cpp" \
         -o "$BIN/flash_dump" || die "빌드 실패"
 elif command -v nvcc >/dev/null 2>&1 || [ -x /usr/local/cuda/bin/nvcc ]; then
