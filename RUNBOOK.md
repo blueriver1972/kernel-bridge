@@ -1,6 +1,6 @@
 # RUNBOOK — 어디까지 했고, 다음에 뭘 하는가
 
-최종 갱신: 2026-08-02
+최종 갱신: 2026-08-03
 
 ## 현재 상태
 
@@ -9,16 +9,25 @@
 | ✅ | Phase 0 — 저장소·구조·하네스·변환 범위 확정·스크립트 | 완료 |
 | ✅ | WSL2 (2.7.11.0) + Ubuntu-22.04, 디스크를 `D:\wsl` 로 이동 | 완료 |
 | ✅ | Phase 2 환경 — docker + `kernel-bridge/rocm:6.3` | 완료 |
-| ✅ | **Phase 2 실행 — 3파일 전부 gfx942 컴파일 성공 (GPU 없이)** | 완료 · 이슈 11건 |
+| ✅ | **Phase 2 — 3파일 전부 gfx942 컴파일 성공 (GPU 없이)** | 완료 · 이슈 11건 |
 | ✅ | CUDA Toolkit 12.6 (WSL 안) — sm_52 컴파일·실행 검증 통과 | 완료 |
 | ✅ | **Phase 1 — GTX 970(sm_52) 기준선, `LLMC_B=2`** | 완료 · 15/15 PASS |
 | ✅ | 데모 장치 1·2 (차이 이미지 · 버그 주입) — 970 에서 실측 검증 | 완료 |
 | ✅ | 공개 저장소 게시 | 완료 |
-| ⬜ | **Phase 3 — MI300X 검증 (네오클라우드)** | ← **여기부터** |
-| ⬜ | A100/H100 기준선 재측정 (성능 비교용) | 미착수 |
-| ⬜ | Phase 4 — 보고서 마무리 · 데모 녹화 | |
+| ✅ | **Phase 3 — MI300X 검증 (AMD Developer Cloud, ROCm 7.0.2)** | **완료 · 15/15 PASS · 이슈 8건 추가** |
+| ✅ | 두 플랫폼 출력 대조 이미지 (상대오차 3.783e-07) | 완료 |
+| ✅ | Phase 3 재측정 (녹화 2회차) — 같은 값 재현 | 완료 |
+| ⛔ | ~~H100/H200 기준선 재측정~~ | **접음 — 성능 비교는 범위 밖으로 확정** |
+| ⬜ | **Phase 4 — 데모 녹화 (클립 1~4·6~8)** | ← **여기부터. 전부 GPU 불필요** |
 
-Phase 1과 Phase 2는 **서로 독립**이다. Phase 3만 "Phase 2 통과 후"라는 제약이 있다 — 이게 예산을 지키는 규칙이다.
+Phase 1과 Phase 2는 **서로 독립**이다. Phase 3만 "Phase 2 통과 후"라는 제약이 있다 — 이게 예산을 지킨 규칙이다.
+
+### ★ 성능 비교를 하지 않기로 한 이유
+
+기준선이 GTX 970(2014, 3.5 TFLOPS)이고 MI300X 는 163 TFLOPS 다.
+동급 NVIDIA(H100/H200)를 빌려 재측정하는 방안은 **비용 대비 얻는 것이 없다고 판단해 접었다.**
+이 프로젝트가 증명하는 것은 "AMD 가 빠르다"가 아니라 **"이식이 맞는지 자동으로 검증된다"** 다.
+측정된 시간은 `03-verify/comparison.md` 에 참고용으로만 남기고 **발표 자료에 넣지 않는다.**
 
 ---
 
@@ -26,15 +35,15 @@ Phase 1과 Phase 2는 **서로 독립**이다. Phase 3만 "Phase 2 통과 후"�
 
 | 프롬프트 | 어디 | 쓸 수 있는 것 |
 |---|---|---|
-| `PS C:\>` | **Windows PowerShell** | `wsl`, `powershell`, `dir` |
+| `PS C:\>` | **Windows PowerShell** | `wsl`, `powershell`, `dir`. `&&` 는 **파서 오류** |
 | `<user>@<host>:~$` | **Ubuntu (WSL 안)** | `bash`, `docker`, `apt`, `git`, `&&` |
+| `root@rocm-...:~#` | **클라우드 포드 (SSH)** | 위와 같음. 로컬 파일은 없다 |
 
 `wsl` 은 Windows 명령이라 **Ubuntu 안에는 없다.** PowerShell 에서 `wsl` 을 치면 Ubuntu 로 들어간다. 나올 때는 `exit`.
 
-아래에서 `$REPO` 는 이 저장소의 WSL 경로다. 저장소를 클론한 위치에 맞춰 한 번 정해 두면 된다:
+아래에서 `$REPO` 는 이 저장소의 WSL 경로다:
 ```bash
 REPO=$(pwd)          # 저장소 루트에서 실행
-# 또는 예: REPO=/mnt/d/work/kernel-bridge
 ```
 
 ---
@@ -70,43 +79,75 @@ VRAM 부족이나 TDR 로 커널이 죽으면 `LLMC_B` 로 문제 크기를 줄�
 
 ---
 
-## STEP B — Phase 3: MI300X 검증 (네오클라우드)
+## STEP B — Phase 3: MI300X 검증 (실제로 이렇게 했다)
 
-> ⚠ Phase 2 컴파일이 **전부 통과한 뒤에만** 온다. 여기서 처음 만나는 건 런타임 오류뿐이어야 한다.
+> ⚠ Phase 2 컴파일이 **전부 통과한 뒤에만** 온다. 그래도 런타임 이슈 8건이 나왔다.
 
-RunPod MI300X (백업: TensorWave) 에서:
+**쓴 곳: AMD Developer Cloud** (devcloud.amd.com · DigitalOcean 인프라 · MI300X 1장 $1.99/시간)
+ROCm 7.0.2 가 이미 깔린 이미지라 docker 빌드 없이 네이티브로 돌았다.
+
 ```bash
-git clone <저장소> kernel-bridge && cd kernel-bridge
-bash scripts/00_fetch_sources.sh
-docker build -t kernel-bridge/rocm:6.3 docker/
-docker run --rm -e FP32_ONLY=1 -v "$PWD":/w -w /w kernel-bridge/rocm:6.3 \
-    bash scripts/21_build_hip.sh
-LLMC_B=2 bash scripts/30_verify_mi300x.sh
+ssh root@<DROPLET_IP>
+git clone https://github.com/blueriver1972/kernel-bridge && cd kernel-bridge
+bash scripts/50_pod_session.sh
 ```
 
-**`FP32_ONLY=1` 과 `LLMC_B` 를 빠뜨리지 말 것.** 기준선이 fp32 로 측정됐다면 MI300X 도 fp32 여야 한다.
+**이 한 줄이 전부다.** `50_pod_session.sh` 가 환경 감지 → 빌드 → 검증 → 덤프 → 요약까지 한다.
+실측 소요: **약 30~40분** (attention k1·k2 가 naive 구현이라 각 1~2분).
 
-정확도 불일치가 나오면 **R1(`WARP_SIZE 32`)부터 의심한다.** 끝나면 **인스턴스를 즉시 끈다.**
+### 이 스크립트가 지키는 것
+
+| 규칙 | 이유 |
+|---|---|
+| **`20_hipify.sh` 를 부르지 않는다** | 다시 돌리면 수정 19건이 전부 덮어써진다 |
+| 빌드(`run_build`)와 실행(`run_gpu`)을 분리 | 컴파일에는 GPU 장치가 필요 없다. 플래그를 붙이면 GPU 없는 환경에서 빌드조차 실패 |
+| 이전 바이너리를 먼저 지운다 | 남아 있으면 빌드 실패가 '성공'으로 오인된다 |
+| ROCm 6.2 를 감지하면 docker 로 우회 | 6.2 링커가 깨져 있다 (E1) |
+| `FP32_ONLY=1` · `LLMC_B=2` 기본값 | 기준선과 조건을 맞춘다. 어긋나면 비교 무효 |
+
+`LLMC_B=` (빈 값)으로 원본 크기 B=8 을 쓸 수 있다. `${LLMC_B-2}` 이므로 콜론이 없다.
+
+### 끝난 뒤 (순서 중요)
+
+```bash
+# 1) 포드에서 로그 push — git 신원이 없으면 먼저 설정
+git config user.name "..." && git config user.email "...@users.noreply.github.com"
+git add -A 03-verify/raw report/demo-images logs/auto-time.tsv
+git commit -m "MI300X 세션 로그" && git push
+```
+
+2. **인스턴스를 Destroy 한다.** "Power Off" 는 스토리지 요금이 계속 나간다.
+3. 콘솔에서 `Hourly Rate: $0.00` / `No active resources` 확인.
+
+### 로컬에서 이어서
+
+```bash
+python3 scripts/40_demo_images.py \
+    report/demo-images/nvidia_970.bin \
+    report/demo-images/amd_mi300x.bin \
+    --labels NVIDIA MI300X --outdir report/demo-images/real
+```
+
+**GPU 가 필요 없다.** `.bin` 두 개만 있으면 된다.
 
 ---
 
 ## STEP C — Phase 4: 보고서 · 데모
 
-- [report/summary.md](report/summary.md) — 측정값이 들어간 실제 요약 (빈칸은 미측정)
-- 데모 장치 3종 — 자세한 설계는 [report/demo-plan.md](report/demo-plan.md)
-- 컴파일 에러 수정 루프는 **사전 녹화 필수** (라이브 실패 위험)
+- [report/summary.md](report/summary.md) — 측정값이 들어간 실제 요약
+- [report/demo-plan.md](report/demo-plan.md) — 데모 장치 설계
+- [report/recording-script.md](report/recording-script.md) — 클립별 찍는 순서와 명령
+- **남은 클립은 전부 GPU 가 필요 없다.** MI300X 클립(5)은 이미 녹화 완료
 
 ---
 
 # 다른 머신에서 재현하기
 
-노트북이나 클라우드에서 다시 세팅할 때 **오늘 밟은 함정을 다시 밟지 않으려면** 아래를 그대로 따른다.
-
 ## 1. 저장소 가져오기
 
 ```bash
-git clone <원격 저장소> kernel-bridge && cd kernel-bridge
-bash scripts/00_fetch_sources.sh        # llm.c 를 고정 SHA 로 받는다
+git clone https://github.com/blueriver1972/kernel-bridge && cd kernel-bridge
+bash scripts/00_fetch_sources.sh        # llm.c 를 고정 SHA(f1e2ace6) 로 받는다
 ```
 
 `vendor/` 와 `bin/` 은 커밋하지 않는다 — 재현은 커밋 SHA 로만 보장한다.
@@ -128,18 +169,13 @@ bash scripts/win/setup-cuda-wsl.sh
 NV_ARCH=sm_XX bash scripts/10_baseline_nvidia.sh
 ```
 
-## 2-b. 네오클라우드 (RunPod / TensorWave) — 리눅스 직접
+## 2-b. 클라우드 MI300X — 리눅스 직접
 
-WSL 이 아니므로 `scripts/win/` 은 쓰지 않는다. 나머지는 동일하다.
+WSL 이 아니므로 `scripts/win/` 은 쓰지 않는다.
 
 ```bash
-docker build -t kernel-bridge/rocm:6.3 docker/
-docker run --rm -e FP32_ONLY=1 -v "$PWD":/w -w /w kernel-bridge/rocm:6.3 \
-    bash -c 'bash scripts/22_verify_toolchain.sh && bash scripts/20_hipify.sh && bash scripts/21_build_hip.sh'
-bash scripts/30_verify_mi300x.sh     # GPU 있는 포드에서만
+bash scripts/50_pod_session.sh      # 단일 진입점. 위 STEP B 참조
 ```
-
-NVIDIA 네오클라우드에서 기준선을 다시 잡을 때는 `NV_ARCH` 만 바꾼다 (A100=`sm_80`, H100=`sm_90`).
 
 ## 3. 반드시 기억할 함정 (전부 실측으로 겪은 것)
 
@@ -154,12 +190,23 @@ NVIDIA 네오클라우드에서 기준선을 다시 잡을 때는 `NV_ARCH` 만 
 | 7 | PowerShell 에서 한글이 깨짐 | PS 5.1 은 BOM 없는 UTF-8 을 코드페이지로 읽는다 | `.ps1` 은 **UTF-8 with BOM** 으로 저장 (적용됨) |
 | 8 | `wsl -d ... -- bash` 에서 `VAR=$(...)` 가 빈 값 | Windows→WSL 인자 전달 과정의 문제 | 명령 치환 대입을 피하고 `$PWD` 나 글롭을 쓴다 |
 | 9 | `the launch timed out and was terminated` | **Windows TDR** — 디스플레이 드라이버가 2초 넘는 커널을 죽인다. 소비자용 GPU 를 Windows/WSL 에서 쓸 때만 발생하며 데이터센터 GPU 에는 없다 | 문제 크기 축소(`LLMC_B`). 이 PC 는 B=2 가 한계 |
+| **10** | **ROCm 7.x 에서 `hip/hip_runtime.h` not found** | `hipcc`·`hipconfig` 가 `core-7.14/include` 를 가리키는데 헤더는 `/opt/rocm/include` 에 있다 | 빌드 스크립트가 `-I/opt/rocm/include` 를 항상 붙인다 (해결됨) |
+| **11** | **ROCm 7.x 에서 `__syncwarp` 중복 정의 / `..._v2` API 없음** | 6.3 에 없던 것이 7.x 에 생기고, 있던 것이 사라졌다. **버전 간 이식이 또 필요하다** | 호환 계층이 `__has_include` 와 `HIP_VERSION_MAJOR` 로 분기 (해결됨) |
+| **12** | **호스트 `max(float,float)` 가 쓰레기값** | HIP 호스트에는 `int max(int,int)` 만 보인다. **경고 한 줄만 나오고 크래시도 없다** | `fmaxf` 로 명시 (해결됨). ★ 정답 대조 없이는 발견 불가 |
+| **13** | **`hipblasSetMathMode` 가 `NOT_SUPPORTED(7)` → attention 6개 전부 실패** | `enable_tf32 = major >= 8` 이 MI300X(major=9)에서 참이 된다. **CUDA 개념이 AMD 로 누출** | `enable_tf32 = 0` 고정, **두 곳** (해결됨) |
+| **14** | **커널 8 이 `block_size=64` 에서만 틀림** | 웨이브 폭 가정이 디바이스(`blockDim.x/warpSize`)와 호스트(`ceil_div(N*32,...)`) **양쪽에** 있다. 하나만 고치면 여전히 틀림 | 둘 다 수정 + 블록 크기 가드 (해결됨) |
+| 15 | 포드에서 `git commit` 이 `author identity unknown` | 새 머신에 git 신원 미설정 | `git config user.name` / `user.email` (저장소 로컬로 충분) |
 
-## 4. 조건 일치 체크리스트 (비교표를 쓰기 전에 확인)
+**#12·#14 는 컴파일러가 아무 말도 하지 않는다.** 이것이 이 프로젝트의 결론이다 —
+[report/summary.md](report/summary.md) 의 "신호가 없는 3건" 참조.
 
-- [ ] 양쪽 정밀도가 같은가 (`FP32_ONLY` / `ENABLE_BF16` / TF32)
-- [ ] 문제 크기 `B` 가 같은가 (`LLMC_B`)
-- [ ] llm.c 커밋 SHA 가 같은가 (`f1e2ace6`)
-- [ ] 컴파일 최적화 플래그가 같은가 (`-O3`, fast-math)
+## 4. 조건 일치 체크리스트
 
-**하나라도 어긋나면 성능 숫자는 쓰지 않는다.**
+- [x] 양쪽 정밀도가 같은가 (`FP32_ONLY=1` / `ENABLE_BF16` 제거 / TF32 없음)
+- [x] 문제 크기 `B` 가 같은가 (`LLMC_B=2`)
+- [x] llm.c 커밋 SHA 가 같은가 (`f1e2ace6`)
+- [x] 컴파일 최적화 플래그가 같은가 (`-O3`, fast-math)
+- [ ] **동급 하드웨어 — 미충족.** 그래서 **성능 비교를 발표하지 않는다**
+
+정확도 비교에는 위 네 항목만 필요하고 전부 충족했다.
+성능 비교에는 다섯 번째가 필요하고 충족하지 못했으므로 **하지 않는다.**
