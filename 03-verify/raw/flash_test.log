@@ -1,0 +1,4 @@
+[DEVICE] AMD Instinct MI300X VF
+[CONFIG] N=1024 d=64 Br=64 iters=50 tol=1.0e-03
+[RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.7174 gflops=98.8
+[36m[06:48:16][0m run:flash_hip — 0s (rc=0)

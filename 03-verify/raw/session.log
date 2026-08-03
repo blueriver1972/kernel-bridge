@@ -1,4 +1,984 @@
-===== MI300X 세션 시작 2026-08-02T18:55:36+09:00 =====
-FP32_ONLY=1  LLMC_B=2  AMD_ARCH=gfx942
+[36m[06:38:32][0m 문제 크기 축소: B=2 — NVIDIA 쪽도 같은 값이어야 한다
 
 [1;36m━━━ 0. 환경 확인 ━━━[0m
+
+
+============================ ROCm System Management Interface ============================
+====================================== Product Info ======================================
+GPU[0]		: Card Series: 		AMD Instinct MI300X VF
+GPU[0]		: Card Model: 		0x74b5
+GPU[0]		: Card Vendor: 		Advanced Micro Devices, Inc. [AMD/ATI]
+GPU[0]		: Card SKU: 		M3000108
+GPU[0]		: Subsystem ID: 	0x74a1
+GPU[0]		: Device Rev: 		0x00
+GPU[0]		: Node ID: 		1
+GPU[0]		: GUID: 		21947
+GPU[0]		: GFX Version: 		gfx942
+==========================================================================================
+================================== End of ROCm SMI Log ===================================
+[36m[06:38:32][0m 포드의 ROCm: 7.0.2
+[36m[06:38:32][0m ROCm 네이티브 감지 — docker 없이 진행합니다
+HIP version: 7.14.60850-0000000
+AMD clang version 23.0.0git (https://github.com/ROCm/llvm-project.git 46fcb339fb61119b337f973c7ca9e710a319fdd0+PATCHED:440716f8b87be9d8e20ed910e10e5b6d14d57cf6)
+Target: x86_64-unknown-linux-gnu
+
+[1;36m━━━ 1. llm.c 소스 확보 (고정 SHA) ━━━[0m
+-rw-r--r-- 1 root root 13921 Aug  3 06:07 /root/kernel-bridge/vendor/llm.c/dev/cuda/common.h
+-rw-r--r-- 1 root root 25050 Aug  3 06:07 /root/kernel-bridge/vendor/llm.c/dev/cuda/softmax_forward.cu
+[36m[06:38:32][0m 완료. 대상 파일 확인됨.
+
+[1;36m━━━ 2. 변환 결과 확인 (hipify 재실행 안 함) ━━━[0m
+[36m[06:38:32][0m 수정 마커(FIX-) 가 있는 파일: 6개
+
+[1;36m━━━ 3. hipcc 빌드 (FP32_ONLY=1) ━━━[0m
+[36m[06:38:32][0m FP32_ONLY — bf16 경로 제외하고 빌드 (기준선과 조건 일치)
+[36m[06:38:32][0m hipcc: softmax_hip
+[36m[06:38:34][0m   OK
+[36m[06:38:34][0m hipcc:softmax — 2s (rc=0)
+[36m[06:38:34][0m hipcc: attention_hip
+[36m[06:38:36][0m   OK
+[36m[06:38:36][0m hipcc:attention — 2s (rc=0)
+[36m[06:38:36][0m hipcc: flash_hip
+[36m[06:38:38][0m   OK
+[36m[06:38:38][0m hipcc:flash — 2s (rc=0)
+
+[36m[06:38:38][0m 전부 컴파일 성공. 이제서야 MI300X 를 켤 차례입니다 → scripts/30_verify_mi300x.sh
+[36m[06:38:38][0m 3개 바이너리 확인
+
+[1;36m━━━ 4. MI300X 실행 + 정확도 검증 ━━━[0m
+# MI300X verify 환경
+date: 2026-08-03T06:38:38+00:00
+offload-arch: gfx942
+HIP version: 7.14.60850-0000000
+AMD clang version 23.0.0git (https://github.com/ROCm/llvm-project.git 46fcb339fb61119b337f973c7ca9e710a319fdd0+PATCHED:440716f8b87be9d8e20ed910e10e5b6d14d57cf6)
+Target: x86_64-unknown-linux-gnu
+Thread model: posix
+InstalledDir: /opt/rocm-7.0.2/core-7.14/lib/llvm/bin
+
+
+============================ ROCm System Management Interface ============================
+============================== Version of System Component ===============================
+Driver version: 6.19.14.31400000
+==========================================================================================
+====================================== Product Info ======================================
+GPU[0]		: Card Series: 		AMD Instinct MI300X VF
+GPU[0]		: Card Model: 		0x74b5
+GPU[0]		: Card Vendor: 		Advanced Micro Devices, Inc. [AMD/ATI]
+GPU[0]		: Card SKU: 		M3000108
+GPU[0]		: Subsystem ID: 	0x74a1
+GPU[0]		: Device Rev: 		0x00
+GPU[0]		: Node ID: 		1
+GPU[0]		: GUID: 		21947
+GPU[0]		: GFX Version: 		gfx942
+==========================================================================================
+================================== End of ROCm SMI Log ===================================
+[36m[06:38:38][0m 실행: softmax_hip kernel=1
+Using kernel 1
+Largest output is: 0.999878
+Checking block size 32.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+Checking block size 64.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+Checking block size 128.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+Checking block size 256.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+Checking block size 512.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+Checking block size 1024.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+All results match. Starting benchmarks.
+
+block_size   32 | time 40.0470 ms | per token 4.89 µs
+block_size   64 | time 44.2163 ms | per token 5.40 µs
+block_size  128 | time 44.6599 ms | per token 5.45 µs
+block_size  256 | time 144.2282 ms | per token 17.61 µs
+block_size  512 | time 363.0882 ms | per token 44.32 µs
+block_size 1024 | time 707.2732 ms | per token 86.34 µs
+[36m[06:41:07][0m run:softmax_hip:k1 — 149s (rc=0)
+[36m[06:41:07][0m 실행: softmax_hip kernel=2
+Using kernel 2
+Largest output is: 0.999878
+Checking block size 32.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+Checking block size 64.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+Checking block size 128.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+Checking block size 256.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+Checking block size 512.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+Checking block size 1024.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+All results match. Starting benchmarks.
+
+block_size   32 | time 4.0156 ms | per token 0.49 µs
+block_size   64 | time 2.9309 ms | per token 0.36 µs
+block_size  128 | time 3.0702 ms | per token 0.37 µs
+block_size  256 | time 2.9649 ms | per token 0.36 µs
+block_size  512 | time 2.8890 ms | per token 0.35 µs
+block_size 1024 | time 2.2653 ms | per token 0.28 µs
+[36m[06:41:23][0m run:softmax_hip:k2 — 16s (rc=0)
+[36m[06:41:23][0m 실행: softmax_hip kernel=3
+Using kernel 3
+Largest output is: 0.999878
+Checking block size 32.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+Checking block size 64.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+Checking block size 128.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+Checking block size 256.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+Checking block size 512.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+Checking block size 1024.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+All results match. Starting benchmarks.
+
+block_size   32 | time 4.1015 ms | per token 0.50 µs
+block_size   64 | time 4.1038 ms | per token 0.50 µs
+block_size  128 | time 4.1077 ms | per token 0.50 µs
+block_size  256 | time 4.1085 ms | per token 0.50 µs
+block_size  512 | time 4.1110 ms | per token 0.50 µs
+block_size 1024 | time 4.1124 ms | per token 0.50 µs
+[36m[06:41:38][0m run:softmax_hip:k3 — 15s (rc=0)
+[36m[06:41:38][0m 실행: softmax_hip kernel=4
+Using kernel 4
+Largest output is: 0.999878
+Checking block size 32.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+Checking block size 64.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+Checking block size 128.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+Checking block size 256.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+Checking block size 512.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+Checking block size 1024.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+All results match. Starting benchmarks.
+
+block_size   32 | time 4.1013 ms | per token 0.50 µs
+block_size   64 | time 2.9652 ms | per token 0.36 µs
+block_size  128 | time 3.1043 ms | per token 0.38 µs
+block_size  256 | time 2.9937 ms | per token 0.37 µs
+block_size  512 | time 2.8296 ms | per token 0.35 µs
+block_size 1024 | time 2.2710 ms | per token 0.28 µs
+[36m[06:41:53][0m run:softmax_hip:k4 — 15s (rc=0)
+[36m[06:41:53][0m 실행: softmax_hip kernel=5
+Using kernel 5
+Largest output is: 0.999878
+Checking block size 32.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+Checking block size 64.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+Checking block size 128.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+Checking block size 256.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+Checking block size 512.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+Checking block size 1024.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+All results match. Starting benchmarks.
+
+block_size   32 | time 40.4862 ms | per token 4.94 µs
+block_size   64 | time 44.1314 ms | per token 5.39 µs
+block_size  128 | time 44.5380 ms | per token 5.44 µs
+block_size  256 | time 138.0706 ms | per token 16.85 µs
+block_size  512 | time 344.2672 ms | per token 42.02 µs
+block_size 1024 | time 679.0711 ms | per token 82.89 µs
+[36m[06:44:17][0m run:softmax_hip:k5 — 144s (rc=0)
+[36m[06:44:17][0m 실행: softmax_hip kernel=6
+Using kernel 6
+Largest output is: 0.999878
+Checking block size 32.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+Checking block size 64.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+Checking block size 128.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+Checking block size 256.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+Checking block size 512.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+Checking block size 1024.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+All results match. Starting benchmarks.
+
+block_size   32 | time 2.6240 ms | per token 0.32 µs
+block_size   64 | time 2.5453 ms | per token 0.31 µs
+block_size  128 | time 2.5425 ms | per token 0.31 µs
+block_size  256 | time 2.5422 ms | per token 0.31 µs
+block_size  512 | time 2.5527 ms | per token 0.31 µs
+block_size 1024 | time 2.5408 ms | per token 0.31 µs
+[36m[06:44:32][0m run:softmax_hip:k6 — 15s (rc=0)
+[36m[06:44:32][0m 실행: softmax_hip kernel=7
+Using kernel 7
+Largest output is: 0.999878
+Checking block size 32.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+Checking block size 64.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+Checking block size 128.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+Checking block size 256.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+Checking block size 512.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+Checking block size 1024.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+All results match. Starting benchmarks.
+
+block_size   32 | time 2.5315 ms | per token 0.31 µs
+block_size   64 | time 2.4311 ms | per token 0.30 µs
+block_size  128 | time 2.8794 ms | per token 0.35 µs
+block_size  256 | time 2.6404 ms | per token 0.32 µs
+block_size  512 | time 2.1648 ms | per token 0.26 µs
+block_size 1024 | time 2.0346 ms | per token 0.25 µs
+[36m[06:44:47][0m run:softmax_hip:k7 — 15s (rc=0)
+[36m[06:44:47][0m 실행: softmax_hip kernel=8
+Using kernel 8
+Largest output is: 0.999878
+Skipping block size 32 for kernel 8 (needs >= wavefront size).
+Checking block size 64.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+Checking block size 128.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+Checking block size 256.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+Checking block size 512.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+Checking block size 1024.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+All results match. Starting benchmarks.
+
+Skipping block size 32 for kernel 8 (needs >= wavefront size).
+block_size   64 | time 1.5964 ms | per token 0.19 µs
+block_size  128 | time 1.5922 ms | per token 0.19 µs
+block_size  256 | time 1.5723 ms | per token 0.19 µs
+block_size  512 | time 1.5954 ms | per token 0.19 µs
+block_size 1024 | time 1.5971 ms | per token 0.19 µs
+[36m[06:45:00][0m run:softmax_hip:k8 — 13s (rc=0)
+[36m[06:45:00][0m 실행: attention_hip kernel=1
+enable_tf32: 0
+Using kernel 1
+Checking block size 32.
+-0.529510 -0.529510
+0.889394 0.889394
+0.881674 0.881674
+0.651789 0.651789
+-0.483486 -0.483486
+1.000000 1.000000
+0.000000 0.000000
+0.000000 0.000000
+0.000000 0.000000
+0.000000 0.000000
+0.027338 0.027338
+-inf -inf
+-inf -inf
+-inf -inf
+-inf -inf
+Checking block size 64.
+-0.529510 -0.529510
+0.889394 0.889394
+0.881674 0.881674
+0.651789 0.651789
+-0.483486 -0.483486
+1.000000 1.000000
+0.000000 0.000000
+0.000000 0.000000
+0.000000 0.000000
+0.000000 0.000000
+0.027338 0.027338
+-inf -inf
+-inf -inf
+-inf -inf
+-inf -inf
+Checking block size 128.
+-0.529510 -0.529510
+0.889394 0.889394
+0.881674 0.881674
+0.651789 0.651789
+-0.483486 -0.483486
+1.000000 1.000000
+0.000000 0.000000
+0.000000 0.000000
+0.000000 0.000000
+0.000000 0.000000
+0.027338 0.027338
+-inf -inf
+-inf -inf
+-inf -inf
+-inf -inf
+Checking block size 256.
+-0.529510 -0.529510
+0.889394 0.889394
+0.881674 0.881674
+0.651789 0.651789
+-0.483486 -0.483486
+1.000000 1.000000
+0.000000 0.000000
+0.000000 0.000000
+0.000000 0.000000
+0.000000 0.000000
+0.027338 0.027338
+-inf -inf
+-inf -inf
+-inf -inf
+-inf -inf
+Checking block size 512.
+-0.529510 -0.529510
+0.889394 0.889394
+0.881674 0.881674
+0.651789 0.651789
+-0.483486 -0.483486
+1.000000 1.000000
+0.000000 0.000000
+0.000000 0.000000
+0.000000 0.000000
+0.000000 0.000000
+0.027338 0.027338
+-inf -inf
+-inf -inf
+-inf -inf
+-inf -inf
+All results match. Starting benchmarks.
+
+block_size   32 | time 58.533218 ms
+block_size   64 | time 66.806122 ms
+block_size  128 | time 88.129356 ms
+block_size  256 | time 103.673416 ms
+block_size  512 | time 111.075706 ms
+[36m[06:45:48][0m run:attention_hip:k1 — 48s (rc=0)
+[36m[06:45:48][0m 실행: attention_hip kernel=2
+enable_tf32: 0
+Using kernel 2
+Checking block size 32.
+-0.529510 -0.529510
+0.889394 0.889394
+0.881674 0.881674
+0.651789 0.651789
+-0.483486 -0.483486
+Checking block size 64.
+-0.529510 -0.529510
+0.889394 0.889394
+0.881674 0.881674
+0.651789 0.651789
+-0.483486 -0.483486
+Checking block size 128.
+-0.529510 -0.529510
+0.889394 0.889394
+0.881674 0.881674
+0.651789 0.651789
+-0.483486 -0.483486
+Checking block size 256.
+-0.529510 -0.529510
+0.889394 0.889394
+0.881674 0.881674
+0.651789 0.651789
+-0.483486 -0.483486
+Checking block size 512.
+-0.529510 -0.529510
+0.889394 0.889394
+0.881674 0.881674
+0.651789 0.651789
+-0.483486 -0.483486
+All results match. Starting benchmarks.
+
+block_size   32 | time 256.964935 ms
+block_size   64 | time 256.798370 ms
+block_size  128 | time 256.733795 ms
+block_size  256 | time 256.746704 ms
+block_size  512 | time 256.721283 ms
+[36m[06:48:00][0m run:attention_hip:k2 — 132s (rc=0)
+[36m[06:48:00][0m 실행: attention_hip kernel=3
+enable_tf32: 0
+Using kernel 3
+Checking block size 32.
+-0.529510 -0.529510
+0.889394 0.889394
+0.881674 0.881674
+0.651789 0.651789
+-0.483486 -0.483486
+1.000000 1.000000
+0.000000 0.000000
+0.000000 0.000000
+0.000000 0.000000
+0.000000 0.000000
+0.027338 0.027338
+-inf -inf
+-inf -inf
+-inf -inf
+-inf -inf
+Checking block size 64.
+-0.529510 -0.529510
+0.889394 0.889394
+0.881674 0.881674
+0.651789 0.651789
+-0.483486 -0.483486
+1.000000 1.000000
+0.000000 0.000000
+0.000000 0.000000
+0.000000 0.000000
+0.000000 0.000000
+0.027338 0.027338
+-inf -inf
+-inf -inf
+-inf -inf
+-inf -inf
+Checking block size 128.
+-0.529510 -0.529510
+0.889394 0.889394
+0.881674 0.881674
+0.651789 0.651789
+-0.483486 -0.483486
+1.000000 1.000000
+0.000000 0.000000
+0.000000 0.000000
+0.000000 0.000000
+0.000000 0.000000
+0.027338 0.027338
+-inf -inf
+-inf -inf
+-inf -inf
+-inf -inf
+Checking block size 256.
+-0.529510 -0.529510
+0.889394 0.889394
+0.881674 0.881674
+0.651789 0.651789
+-0.483486 -0.483486
+1.000000 1.000000
+0.000000 0.000000
+0.000000 0.000000
+0.000000 0.000000
+0.000000 0.000000
+0.027338 0.027338
+-inf -inf
+-inf -inf
+-inf -inf
+-inf -inf
+Checking block size 512.
+-0.529510 -0.529510
+0.889394 0.889394
+0.881674 0.881674
+0.651789 0.651789
+-0.483486 -0.483486
+1.000000 1.000000
+0.000000 0.000000
+0.000000 0.000000
+0.000000 0.000000
+0.000000 0.000000
+0.027338 0.027338
+-inf -inf
+-inf -inf
+-inf -inf
+-inf -inf
+All results match. Starting benchmarks.
+
+block_size   32 | time 2.873586 ms
+block_size   64 | time 2.008784 ms
+block_size  128 | time 1.661780 ms
+block_size  256 | time 1.518355 ms
+block_size  512 | time 1.530122 ms
+[36m[06:48:06][0m run:attention_hip:k3 — 6s (rc=0)
+[36m[06:48:06][0m 실행: attention_hip kernel=4
+enable_tf32: 0
+Using kernel 4
+Checking block size 32.
+-0.529510 -0.529510
+0.889394 0.889394
+0.881674 0.881674
+0.651789 0.651789
+-0.483486 -0.483486
+1.000000 1.000000
+0.000000 0.000000
+0.000000 0.000000
+0.000000 0.000000
+0.000000 0.000000
+Checking block size 64.
+-0.529510 -0.529510
+0.889394 0.889394
+0.881674 0.881674
+0.651789 0.651789
+-0.483486 -0.483486
+1.000000 1.000000
+0.000000 0.000000
+0.000000 0.000000
+0.000000 0.000000
+0.000000 0.000000
+Checking block size 128.
+-0.529510 -0.529510
+0.889394 0.889394
+0.881674 0.881674
+0.651789 0.651789
+-0.483486 -0.483486
+1.000000 1.000000
+0.000000 0.000000
+0.000000 0.000000
+0.000000 0.000000
+0.000000 0.000000
+Checking block size 256.
+-0.529510 -0.529510
+0.889394 0.889394
+0.881674 0.881674
+0.651789 0.651789
+-0.483486 -0.483486
+1.000000 1.000000
+0.000000 0.000000
+0.000000 0.000000
+0.000000 0.000000
+0.000000 0.000000
+Checking block size 512.
+-0.529510 -0.529510
+0.889394 0.889394
+0.881674 0.881674
+0.651789 0.651789
+-0.483486 -0.483486
+1.000000 1.000000
+0.000000 0.000000
+0.000000 0.000000
+0.000000 0.000000
+0.000000 0.000000
+All results match. Starting benchmarks.
+
+block_size   32 | time 1.022412 ms
+block_size   64 | time 0.927241 ms
+block_size  128 | time 0.888402 ms
+block_size  256 | time 0.876653 ms
+block_size  512 | time 0.880049 ms
+[36m[06:48:10][0m run:attention_hip:k4 — 4s (rc=0)
+[36m[06:48:10][0m 실행: attention_hip kernel=5
+enable_tf32: 0
+Using kernel 5
+Checking block size 32.
+-0.529510 -0.529510
+0.889394 0.889394
+0.881674 0.881674
+0.651789 0.651789
+-0.483486 -0.483486
+Checking block size 64.
+-0.529510 -0.529510
+0.889394 0.889394
+0.881674 0.881674
+0.651789 0.651789
+-0.483486 -0.483486
+Checking block size 128.
+-0.529510 -0.529510
+0.889394 0.889394
+0.881674 0.881674
+0.651789 0.651789
+-0.483486 -0.483486
+Checking block size 256.
+-0.529510 -0.529510
+0.889394 0.889394
+0.881674 0.881674
+0.651789 0.651789
+-0.483486 -0.483486
+Checking block size 512.
+-0.529510 -0.529510
+0.889394 0.889394
+0.881674 0.881674
+0.651789 0.651789
+-0.483486 -0.483486
+All results match. Starting benchmarks.
+
+block_size   32 | time 1.017807 ms
+block_size   64 | time 0.923935 ms
+block_size  128 | time 0.885685 ms
+block_size  256 | time 0.878628 ms
+block_size  512 | time 0.878927 ms
+[36m[06:48:13][0m run:attention_hip:k5 — 3s (rc=0)
+[36m[06:48:13][0m 실행: attention_hip kernel=6
+enable_tf32: 0
+Using kernel 6
+Checking block size 32.
+-0.529510 -0.529510
+0.889394 0.889394
+0.881674 0.881674
+0.651789 0.651789
+-0.483486 -0.483486
+Checking block size 64.
+-0.529510 -0.529510
+0.889394 0.889394
+0.881674 0.881674
+0.651789 0.651789
+-0.483486 -0.483486
+Checking block size 128.
+-0.529510 -0.529510
+0.889394 0.889394
+0.881674 0.881674
+0.651789 0.651789
+-0.483486 -0.483486
+Checking block size 256.
+-0.529510 -0.529510
+0.889394 0.889394
+0.881674 0.881674
+0.651789 0.651789
+-0.483486 -0.483486
+Checking block size 512.
+-0.529510 -0.529510
+0.889394 0.889394
+0.881674 0.881674
+0.651789 0.651789
+-0.483486 -0.483486
+All results match. Starting benchmarks.
+
+block_size   32 | time 0.827477 ms
+block_size   64 | time 0.822782 ms
+block_size  128 | time 0.824743 ms
+block_size  256 | time 0.824463 ms
+block_size  512 | time 0.824591 ms
+[36m[06:48:16][0m run:attention_hip:k6 — 3s (rc=0)
+[36m[06:48:16][0m 실행: flash_hip
+[DEVICE] AMD Instinct MI300X VF
+[CONFIG] N=1024 d=64 Br=64 iters=50 tol=1.0e-03
+[RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.7174 gflops=98.8
+[36m[06:48:16][0m run:flash_hip — 0s (rc=0)
+
+[36m[06:48:16][0m === 정확도 요약 ===
+      4       2       2 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.6699 gflops=100.5
+      3       1 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.6699 gflops=100.5
+      2 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.7174 gflops=98.8
+      2       2 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.7156 gflops=98.8
+      2       2 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.7150 gflops=98.9
+      2       2 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.6699 gflops=100.5
+      2       2 Mismatch of out at 71678: CPU_ref: 0.108887 vs GPU: 0.000000
+      2       2 Mismatch of out at 324205: CPU_ref: 0.502719 vs GPU: 0.000000
+      2       2 Mismatch of out at 324064: CPU_ref: 0.494311 vs GPU: 0.000000
+      2       2 Mismatch of out at 310984: CPU_ref: 0.000152 vs GPU: 0.000000
+      2       2 Mismatch of out at 270556: CPU_ref: 0.988786 vs GPU: 0.000000
+      2       2 Mismatch of out at 242510: CPU_ref: 0.124863 vs GPU: 0.000000
+      2       2 Mismatch of out at 206180514: CPU_ref: 0.984735 vs GPU: 0.000000
+      2       2 Mismatch of out at 206128316: CPU_ref: 0.994686 vs GPU: 0.000000
+      2       2 Mismatch of out at 206060412: CPU_ref: 0.000739 vs GPU: 0.000000
+      2       2 Mismatch of out at 206033800: CPU_ref: 0.998657 vs GPU: 0.000000
+      2       2 Mismatch of out at 206022374: CPU_ref: 0.000135 vs GPU: 0.000000
+      2       2 Mismatch of out at 205973981: CPU_ref: 0.737035 vs GPU: 0.000000
+      2       2 Mismatch of out at 205963410: CPU_ref: 0.039773 vs GPU: 0.000000
+      2       2 Mismatch of out at 205959974: CPU_ref: 0.221891 vs GPU: 0.000000
+      2       2 Mismatch of out at 205915621: CPU_ref: 0.495771 vs GPU: 0.000000
+      2       2 Mismatch of out at 205880635: CPU_ref: 0.000279 vs GPU: 0.000000
+      2       2 Mismatch of out at 153020: CPU_ref: 0.004324 vs GPU: 0.000000
+      2       2 Mismatch of out at 10773: CPU_ref: 0.958574 vs GPU: 0.978905
+      2       2 Mismatch of out at 102906: CPU_ref: 0.998753 vs GPU: 0.000000
+      2       2 Mismatch of out at 100491: CPU_ref: 0.627314 vs GPU: 0.000000
+      2       2       2 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.7150 gflops=98.9
+      2       2       2 Mismatch of out at 71678: CPU_ref: 0.108887 vs GPU: 0.000000
+      2       2       2 Mismatch of out at 324205: CPU_ref: 0.502719 vs GPU: 0.000000
+      2       2       2 Mismatch of out at 324064: CPU_ref: 0.494311 vs GPU: 0.000000
+      2       2       2 Mismatch of out at 310984: CPU_ref: 0.000152 vs GPU: 0.000000
+      2       1       1       2 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.6699 gflops=100.5
+      1 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.7156 gflops=98.8
+      1 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.7150 gflops=98.9
+      1 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.6699 gflops=100.5
+      1 Mismatch of out at 71678: CPU_ref: 0.108887 vs GPU: 0.000000
+      1 Mismatch of out at 324205: CPU_ref: 0.502719 vs GPU: 0.000000
+      1 Mismatch of out at 324064: CPU_ref: 0.494311 vs GPU: 0.000000
+      1 Mismatch of out at 310984: CPU_ref: 0.000152 vs GPU: 0.000000
+      1 Mismatch of out at 270556: CPU_ref: 0.988786 vs GPU: 0.000000
+      1 Mismatch of out at 242510: CPU_ref: 0.124863 vs GPU: 0.000000
+      1 Mismatch of out at 206180514: CPU_ref: 0.984735 vs GPU: 0.000000
+      1 Mismatch of out at 206128316: CPU_ref: 0.994686 vs GPU: 0.000000
+      1 Mismatch of out at 206060412: CPU_ref: 0.000739 vs GPU: 0.000000
+      1 Mismatch of out at 206033800: CPU_ref: 0.998657 vs GPU: 0.000000
+      1 Mismatch of out at 206022374: CPU_ref: 0.000135 vs GPU: 0.000000
+      1 Mismatch of out at 205973981: CPU_ref: 0.737035 vs GPU: 0.000000
+      1 Mismatch of out at 205963410: CPU_ref: 0.039773 vs GPU: 0.000000
+      1 Mismatch of out at 205959974: CPU_ref: 0.221891 vs GPU: 0.000000
+      1 Mismatch of out at 205915621: CPU_ref: 0.495771 vs GPU: 0.000000
+      1 Mismatch of out at 205880635: CPU_ref: 0.000279 vs GPU: 0.000000
+      1 Mismatch of out at 153020: CPU_ref: 0.004324 vs GPU: 0.000000
+      1 Mismatch of out at 10773: CPU_ref: 0.958574 vs GPU: 0.978905
+      1 Mismatch of out at 102906: CPU_ref: 0.998753 vs GPU: 0.000000
+      1 Mismatch of out at 100491: CPU_ref: 0.627314 vs GPU: 0.000000
+      1       3       2       2 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.6699 gflops=100.5
+      1       3       1 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.6699 gflops=100.5
+      1       2       2 Mismatch of out at 270556: CPU_ref: 0.988786 vs GPU: 0.000000
+      1       2       2 Mismatch of out at 242510: CPU_ref: 0.124863 vs GPU: 0.000000
+      1       2       2 Mismatch of out at 153020: CPU_ref: 0.004324 vs GPU: 0.000000
+      1       2       2 Mismatch of out at 10773: CPU_ref: 0.958574 vs GPU: 0.978905
+      1       2       2 Mismatch of out at 102906: CPU_ref: 0.998753 vs GPU: 0.000000
+      1       2       2 Mismatch of out at 100491: CPU_ref: 0.627314 vs GPU: 0.000000
+      1       2       2       2 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.6699 gflops=100.5
+      1       2       1 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.6699 gflops=100.5
+      1       1 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.7150 gflops=98.9
+      1       1 Mismatch of out at 71678: CPU_ref: 0.108887 vs GPU: 0.000000
+      1       1 Mismatch of out at 324205: CPU_ref: 0.502719 vs GPU: 0.000000
+      1       1 Mismatch of out at 324064: CPU_ref: 0.494311 vs GPU: 0.000000
+      1       1 Mismatch of out at 310984: CPU_ref: 0.000152 vs GPU: 0.000000
+      1       1 Mismatch of out at 270556: CPU_ref: 0.988786 vs GPU: 0.000000
+      1       1 Mismatch of out at 242510: CPU_ref: 0.124863 vs GPU: 0.000000
+      1       1 Mismatch of out at 153020: CPU_ref: 0.004324 vs GPU: 0.000000
+      1       1 Mismatch of out at 10773: CPU_ref: 0.958574 vs GPU: 0.978905
+      1       1 Mismatch of out at 102906: CPU_ref: 0.998753 vs GPU: 0.000000
+      1       1 Mismatch of out at 100491: CPU_ref: 0.627314 vs GPU: 0.000000
+      1       1       2 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.7150 gflops=98.9
+      1       1       2 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.6699 gflops=100.5
+      1       1       2 Mismatch of out at 71678: CPU_ref: 0.108887 vs GPU: 0.000000
+      1       1       2 Mismatch of out at 324205: CPU_ref: 0.502719 vs GPU: 0.000000
+      1       1       1       2 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.7150 gflops=98.9
+      1       1       1       2 Mismatch of out at 71678: CPU_ref: 0.108887 vs GPU: 0.000000
+      1       1       1       2 Mismatch of out at 324205: CPU_ref: 0.502719 vs GPU: 0.000000
+      1       1       1       1       2 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.6699 gflops=100.5
+[36m[06:48:16][0m rocprof: 가장 느렸던 경로 1건 프로파일
+[36m[06:48:20][0m 완료. 03-verify/raw/ 로 verify.md 비교표를 채우세요.
+[33m[WARN][0m ★ GPU 인스턴스를 지금 끄세요. ★
+
+[1;36m━━━ 5. 데모용 출력 덤프 (차이 이미지 재료) ━━━[0m
+[36m[06:48:21][0m hipcc 로 빌드 (arch=gfx942)
+[DUMP] device=AMD Instinct MI300X VF N=1024 d=64 -> /root/kernel-bridge/report/demo-images/amd_mi300x.bin (262144 bytes)
+[36m[06:48:23][0m dump:amd_mi300x — 0s (rc=0)
+[36m[06:48:23][0m 완료: report/demo-images/amd_mi300x.bin
+
+[1;36m━━━ 6. 요약 ━━━[0m
+=== 정확도 ===
+      8 softmax_hip: /tmp/tmp.WJGC9o0gVR/softmax_forward.hip.cpp:704: int main(int, char **): Assertion `max_el > 1e-4' failed.
+      5       2       2 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.6699 gflops=100.5
+      4       1 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.6699 gflops=100.5
+      3       2       2 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.7150 gflops=98.9
+      3       2       2 Mismatch of out at 71678: CPU_ref: 0.108887 vs GPU: 0.000000
+      3       2       2 Mismatch of out at 324205: CPU_ref: 0.502719 vs GPU: 0.000000
+      3       2       2 Mismatch of out at 324064: CPU_ref: 0.494311 vs GPU: 0.000000
+      3       2       2 Mismatch of out at 310984: CPU_ref: 0.000152 vs GPU: 0.000000
+      3       1       1       2 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.6699 gflops=100.5
+      2 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.7174 gflops=98.8
+      2       8 softmax_hip: /tmp/tmp.WJGC9o0gVR/softmax_forward.hip.cpp:704: int main(int, char **): Assertion `max_el > 1e-4' failed.
+      2       3       1 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.6699 gflops=100.5
+      2       2 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.7156 gflops=98.8
+      2       2 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.7150 gflops=98.9
+      2       2 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.6699 gflops=100.5
+      2       2 Mismatch of out at 71678: CPU_ref: 0.108887 vs GPU: 0.000000
+      2       2 Mismatch of out at 324205: CPU_ref: 0.502719 vs GPU: 0.000000
+      2       2 Mismatch of out at 324064: CPU_ref: 0.494311 vs GPU: 0.000000
+      2       2 Mismatch of out at 310984: CPU_ref: 0.000152 vs GPU: 0.000000
+      2       2 Mismatch of out at 270556: CPU_ref: 0.988786 vs GPU: 0.000000
+
+=== 실행 시간 ===
+2026-08-03T06:34:58+00:00	run:attention_hip:k3	0s	rc=1
+2026-08-03T06:34:59+00:00	run:attention_hip:k4	1s	rc=1
+2026-08-03T06:34:59+00:00	run:attention_hip:k5	0s	rc=1
+2026-08-03T06:34:59+00:00	run:attention_hip:k6	0s	rc=1
+2026-08-03T06:34:59+00:00	run:flash_hip	0s	rc=0
+2026-08-03T06:41:07+00:00	run:softmax_hip:k1	149s	rc=0
+2026-08-03T06:41:23+00:00	run:softmax_hip:k2	16s	rc=0
+2026-08-03T06:41:38+00:00	run:softmax_hip:k3	15s	rc=0
+2026-08-03T06:41:53+00:00	run:softmax_hip:k4	15s	rc=0
+2026-08-03T06:44:17+00:00	run:softmax_hip:k5	144s	rc=0
+2026-08-03T06:44:32+00:00	run:softmax_hip:k6	15s	rc=0
+2026-08-03T06:44:47+00:00	run:softmax_hip:k7	15s	rc=0
+2026-08-03T06:45:00+00:00	run:softmax_hip:k8	13s	rc=0
+2026-08-03T06:45:48+00:00	run:attention_hip:k1	48s	rc=0
+2026-08-03T06:48:00+00:00	run:attention_hip:k2	132s	rc=0
+2026-08-03T06:48:06+00:00	run:attention_hip:k3	6s	rc=0
+2026-08-03T06:48:10+00:00	run:attention_hip:k4	4s	rc=0
+2026-08-03T06:48:13+00:00	run:attention_hip:k5	3s	rc=0
+2026-08-03T06:48:16+00:00	run:attention_hip:k6	3s	rc=0
+2026-08-03T06:48:16+00:00	run:flash_hip	0s	rc=0
+
+────────────────────────────────────────────────────────────
+세션 종료. ★ 인스턴스를 지금 끄세요. ★
+
+가져갈 것 (git commit & push 하거나 scp):
+  03-verify/raw/            원시 로그 + session.log
+  report/demo-images/amd_mi300x.bin   데모 이미지 재료
+  logs/auto-time.tsv        시간 기록
+
+로컬에서 이어서:
+  python3 scripts/40_demo_images.py \
+      report/demo-images/nvidia_970.bin \
+      report/demo-images/amd_mi300x.bin \
+      --labels NVIDIA MI300X
+────────────────────────────────────────────────────────────

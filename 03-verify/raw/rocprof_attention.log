@@ -1,0 +1,81 @@
+
+[0;31mWARNING: We are phasing out development and support for roctracer/rocprofiler/rocprof/rocprofv2 in favor of rocprofiler-sdk/rocprofv3 in upcoming ROCm releases. Going forward, only critical defect fixes will be addressed for older versions of profiling tools and libraries. We encourage all users to upgrade to the latest version, rocprofiler-sdk library and rocprofv3 tool, to ensure continued support and access to new features.[0m
+
+RPL: on '260803_064816' from '/opt/rocm-7.0.2' in '/root/kernel-bridge'
+RPL: profiling '"/root/kernel-bridge/bin/attention_hip" "4"'
+RPL: input file ''
+RPL: output dir '/tmp/rpl_data_260803_064816_8810'
+RPL: result dir '/tmp/rpl_data_260803_064816_8810/input_results_260803_064816'
+ROCProfiler: input from "/tmp/rpl_data_260803_064816_8810/input.xml"
+  0 metrics
+enable_tf32: 0
+Using kernel 4
+Checking block size 32.
+-0.529510 -0.529510
+0.889394 0.889394
+0.881674 0.881674
+0.651789 0.651789
+-0.483486 -0.483486
+1.000000 1.000000
+0.000000 0.000000
+0.000000 0.000000
+0.000000 0.000000
+0.000000 0.000000
+Checking block size 64.
+-0.529510 -0.529510
+0.889394 0.889394
+0.881674 0.881674
+0.651789 0.651789
+-0.483486 -0.483486
+1.000000 1.000000
+0.000000 0.000000
+0.000000 0.000000
+0.000000 0.000000
+0.000000 0.000000
+Checking block size 128.
+-0.529510 -0.529510
+0.889394 0.889394
+0.881674 0.881674
+0.651789 0.651789
+-0.483486 -0.483486
+1.000000 1.000000
+0.000000 0.000000
+0.000000 0.000000
+0.000000 0.000000
+0.000000 0.000000
+Checking block size 256.
+-0.529510 -0.529510
+0.889394 0.889394
+0.881674 0.881674
+0.651789 0.651789
+-0.483486 -0.483486
+1.000000 1.000000
+0.000000 0.000000
+0.000000 0.000000
+0.000000 0.000000
+0.000000 0.000000
+Checking block size 512.
+-0.529510 -0.529510
+0.889394 0.889394
+0.881674 0.881674
+0.651789 0.651789
+-0.483486 -0.483486
+1.000000 1.000000
+0.000000 0.000000
+0.000000 0.000000
+0.000000 0.000000
+0.000000 0.000000
+All results match. Starting benchmarks.
+
+block_size   32 | time 1.024039 ms
+block_size   64 | time 0.927756 ms
+block_size  128 | time 0.888715 ms
+block_size  256 | time 0.879235 ms
+block_size  512 | time 0.880469 ms
+
+ROCPRofiler: 3026 contexts collected, output directory /tmp/rpl_data_260803_064816_8810/input_results_260803_064816
+File '/root/kernel-bridge/03-verify/raw/rocprof_attention.csv' is generating
+File '/root/kernel-bridge/03-verify/raw/rocprof_attention.stats.csv' is generating
+dump json 0:3026                                                                                                    dump json 1000:3026                                                                                                    dump json 2000:3026                                                                                                    dump json 3000:3026                                                                                                    dump json 3025:3026                                                                                                    
+File '/root/kernel-bridge/03-verify/raw/rocprof_attention.json' is generating
+[36m[06:48:20][0m rocprof:attention — 4s (rc=0)

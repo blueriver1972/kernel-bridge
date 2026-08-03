@@ -1,0 +1,84 @@
+      4       2       2 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.6699 gflops=100.5
+      3       1 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.6699 gflops=100.5
+      2 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.7174 gflops=98.8
+      2       2 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.7156 gflops=98.8
+      2       2 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.7150 gflops=98.9
+      2       2 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.6699 gflops=100.5
+      2       2 Mismatch of out at 71678: CPU_ref: 0.108887 vs GPU: 0.000000
+      2       2 Mismatch of out at 324205: CPU_ref: 0.502719 vs GPU: 0.000000
+      2       2 Mismatch of out at 324064: CPU_ref: 0.494311 vs GPU: 0.000000
+      2       2 Mismatch of out at 310984: CPU_ref: 0.000152 vs GPU: 0.000000
+      2       2 Mismatch of out at 270556: CPU_ref: 0.988786 vs GPU: 0.000000
+      2       2 Mismatch of out at 242510: CPU_ref: 0.124863 vs GPU: 0.000000
+      2       2 Mismatch of out at 206180514: CPU_ref: 0.984735 vs GPU: 0.000000
+      2       2 Mismatch of out at 206128316: CPU_ref: 0.994686 vs GPU: 0.000000
+      2       2 Mismatch of out at 206060412: CPU_ref: 0.000739 vs GPU: 0.000000
+      2       2 Mismatch of out at 206033800: CPU_ref: 0.998657 vs GPU: 0.000000
+      2       2 Mismatch of out at 206022374: CPU_ref: 0.000135 vs GPU: 0.000000
+      2       2 Mismatch of out at 205973981: CPU_ref: 0.737035 vs GPU: 0.000000
+      2       2 Mismatch of out at 205963410: CPU_ref: 0.039773 vs GPU: 0.000000
+      2       2 Mismatch of out at 205959974: CPU_ref: 0.221891 vs GPU: 0.000000
+      2       2 Mismatch of out at 205915621: CPU_ref: 0.495771 vs GPU: 0.000000
+      2       2 Mismatch of out at 205880635: CPU_ref: 0.000279 vs GPU: 0.000000
+      2       2 Mismatch of out at 153020: CPU_ref: 0.004324 vs GPU: 0.000000
+      2       2 Mismatch of out at 10773: CPU_ref: 0.958574 vs GPU: 0.978905
+      2       2 Mismatch of out at 102906: CPU_ref: 0.998753 vs GPU: 0.000000
+      2       2 Mismatch of out at 100491: CPU_ref: 0.627314 vs GPU: 0.000000
+      2       2       2 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.7150 gflops=98.9
+      2       2       2 Mismatch of out at 71678: CPU_ref: 0.108887 vs GPU: 0.000000
+      2       2       2 Mismatch of out at 324205: CPU_ref: 0.502719 vs GPU: 0.000000
+      2       2       2 Mismatch of out at 324064: CPU_ref: 0.494311 vs GPU: 0.000000
+      2       2       2 Mismatch of out at 310984: CPU_ref: 0.000152 vs GPU: 0.000000
+      2       1       1       2 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.6699 gflops=100.5
+      1 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.7156 gflops=98.8
+      1 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.7150 gflops=98.9
+      1 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.6699 gflops=100.5
+      1 Mismatch of out at 71678: CPU_ref: 0.108887 vs GPU: 0.000000
+      1 Mismatch of out at 324205: CPU_ref: 0.502719 vs GPU: 0.000000
+      1 Mismatch of out at 324064: CPU_ref: 0.494311 vs GPU: 0.000000
+      1 Mismatch of out at 310984: CPU_ref: 0.000152 vs GPU: 0.000000
+      1 Mismatch of out at 270556: CPU_ref: 0.988786 vs GPU: 0.000000
+      1 Mismatch of out at 242510: CPU_ref: 0.124863 vs GPU: 0.000000
+      1 Mismatch of out at 206180514: CPU_ref: 0.984735 vs GPU: 0.000000
+      1 Mismatch of out at 206128316: CPU_ref: 0.994686 vs GPU: 0.000000
+      1 Mismatch of out at 206060412: CPU_ref: 0.000739 vs GPU: 0.000000
+      1 Mismatch of out at 206033800: CPU_ref: 0.998657 vs GPU: 0.000000
+      1 Mismatch of out at 206022374: CPU_ref: 0.000135 vs GPU: 0.000000
+      1 Mismatch of out at 205973981: CPU_ref: 0.737035 vs GPU: 0.000000
+      1 Mismatch of out at 205963410: CPU_ref: 0.039773 vs GPU: 0.000000
+      1 Mismatch of out at 205959974: CPU_ref: 0.221891 vs GPU: 0.000000
+      1 Mismatch of out at 205915621: CPU_ref: 0.495771 vs GPU: 0.000000
+      1 Mismatch of out at 205880635: CPU_ref: 0.000279 vs GPU: 0.000000
+      1 Mismatch of out at 153020: CPU_ref: 0.004324 vs GPU: 0.000000
+      1 Mismatch of out at 10773: CPU_ref: 0.958574 vs GPU: 0.978905
+      1 Mismatch of out at 102906: CPU_ref: 0.998753 vs GPU: 0.000000
+      1 Mismatch of out at 100491: CPU_ref: 0.627314 vs GPU: 0.000000
+      1       3       2       2 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.6699 gflops=100.5
+      1       3       1 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.6699 gflops=100.5
+      1       2       2 Mismatch of out at 270556: CPU_ref: 0.988786 vs GPU: 0.000000
+      1       2       2 Mismatch of out at 242510: CPU_ref: 0.124863 vs GPU: 0.000000
+      1       2       2 Mismatch of out at 153020: CPU_ref: 0.004324 vs GPU: 0.000000
+      1       2       2 Mismatch of out at 10773: CPU_ref: 0.958574 vs GPU: 0.978905
+      1       2       2 Mismatch of out at 102906: CPU_ref: 0.998753 vs GPU: 0.000000
+      1       2       2 Mismatch of out at 100491: CPU_ref: 0.627314 vs GPU: 0.000000
+      1       2       2       2 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.6699 gflops=100.5
+      1       2       1 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.6699 gflops=100.5
+      1       1 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.7150 gflops=98.9
+      1       1 Mismatch of out at 71678: CPU_ref: 0.108887 vs GPU: 0.000000
+      1       1 Mismatch of out at 324205: CPU_ref: 0.502719 vs GPU: 0.000000
+      1       1 Mismatch of out at 324064: CPU_ref: 0.494311 vs GPU: 0.000000
+      1       1 Mismatch of out at 310984: CPU_ref: 0.000152 vs GPU: 0.000000
+      1       1 Mismatch of out at 270556: CPU_ref: 0.988786 vs GPU: 0.000000
+      1       1 Mismatch of out at 242510: CPU_ref: 0.124863 vs GPU: 0.000000
+      1       1 Mismatch of out at 153020: CPU_ref: 0.004324 vs GPU: 0.000000
+      1       1 Mismatch of out at 10773: CPU_ref: 0.958574 vs GPU: 0.978905
+      1       1 Mismatch of out at 102906: CPU_ref: 0.998753 vs GPU: 0.000000
+      1       1 Mismatch of out at 100491: CPU_ref: 0.627314 vs GPU: 0.000000
+      1       1       2 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.7150 gflops=98.9
+      1       1       2 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.6699 gflops=100.5
+      1       1       2 Mismatch of out at 71678: CPU_ref: 0.108887 vs GPU: 0.000000
+      1       1       2 Mismatch of out at 324205: CPU_ref: 0.502719 vs GPU: 0.000000
+      1       1       1       2 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.7150 gflops=98.9
+      1       1       1       2 Mismatch of out at 71678: CPU_ref: 0.108887 vs GPU: 0.000000
+      1       1       1       2 Mismatch of out at 324205: CPU_ref: 0.502719 vs GPU: 0.000000
+      1       1       1       1       2 [RESULT] kernel=flash_attention_fwd status=PASS max_rel_err=1.815e-06 max_abs_err=1.430e-07 time_ms=2.6699 gflops=100.5

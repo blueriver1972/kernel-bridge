@@ -1,0 +1,47 @@
+Using kernel 2
+Largest output is: 0.999878
+Checking block size 32.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+Checking block size 64.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+Checking block size 128.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+Checking block size 256.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+Checking block size 512.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+Checking block size 1024.
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000001 0.000001
+0.000002 0.000002
+All results match. Starting benchmarks.
+
+block_size   32 | time 4.0156 ms | per token 0.49 µs
+block_size   64 | time 2.9309 ms | per token 0.36 µs
+block_size  128 | time 3.0702 ms | per token 0.37 µs
+block_size  256 | time 2.9649 ms | per token 0.36 µs
+block_size  512 | time 2.8890 ms | per token 0.35 µs
+block_size 1024 | time 2.2653 ms | per token 0.28 µs
+[36m[06:41:23][0m run:softmax_hip:k2 — 16s (rc=0)
