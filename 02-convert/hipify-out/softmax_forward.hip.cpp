@@ -699,7 +699,12 @@ int main(int argc, char **argv) {
     {
         float max_el = -INFINITY;
         for(int i = 0; i <  B * T * V; ++i) {
-            max_el = max(max_el, out[i]);
+            // [FIX-12] ★ HIP 호스트 코드에서 max(float,float) 는
+            //   int max(int,int) 로 해석된다 (디바이스 쪽은 float 오버로드가 정상).
+            //   CUDA 는 호스트에도 float 오버로드를 제공하므로 원본은 잘 돌아간다.
+            //   컴파일은 경고만 내고 통과하며, -inf 를 int 로 변환해 쓰레기값이 나온다.
+            //   원본에 우연히 있던 assert 가 유일한 방어선이었다.
+            max_el = fmaxf(max_el, out[i]);
         }
         assert(max_el > 1e-4);
         printf("Largest output is: %f\n", max_el);
